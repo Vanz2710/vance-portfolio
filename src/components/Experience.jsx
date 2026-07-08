@@ -1,75 +1,58 @@
-import { useInView } from '../hooks/useInView'
-
-const experience = [
+const ITEMS = [
   {
-    period: '2024 — Present',
+    date: '[2024 – present]',
     role: 'Software Developer Intern',
-    company: 'Bluedale Group of Companies',
-    desc: 'Developed a full-stack multi-user CRM system from the ground up — designed database architecture, built RESTful APIs with Laravel, and created a Vue 3 SPA frontend with RBAC. Collaborated on feature planning and production deployment.',
+    org: 'Bluedale Group of Companies',
+    desc: 'Developed a full-stack multi-user CRM from the ground up — designed the database architecture, built RESTful APIs with Laravel, and created a Vue 3 SPA frontend with role-based access control.',
+    delay: null,
   },
   {
-    period: 'June 2024 — July 2024',
+    date: '[jun – jul 2024]',
     role: 'Private Tutor',
-    company: 'Self-Employed',
-    desc: 'Developed and delivered customised lesson plans for Python programming and Microsoft Word. Guided students through Python logic and syntax, improving their digital literacy and software skills.',
+    org: 'Self-employed',
+    desc: 'Designed and delivered customised lesson plans for Python programming and Microsoft Word, guiding students through logic, syntax and digital literacy.',
+    delay: '80',
   },
   {
-    period: 'Nov 2022 — Apr 2023',
+    date: '[nov 22 – apr 23]',
     role: 'Customer Service Associate',
-    company: 'The Peranakan',
-    desc: 'Delivered fast, client-focused service in a high-volume environment. Processed daily transactions accurately, managed POS operations, and provided team leadership during peak hours.',
+    org: 'The Peranakan',
+    desc: 'Delivered fast, client-focused service in a high-volume environment — accurate daily transactions, POS operations and team leadership during peak hours.',
+    delay: '160',
   },
   {
-    period: 'May 2023 — Present',
-    role: "Bachelor's in Information Technology",
-    company: 'HELP University  ·  CGPA 3.32',
-    desc: 'Studying software development, system design, data analysis, and UI/UX principles. Built multiple academic and personal projects across Java, Python, JavaScript, Angular, Django, and Laravel. Active in tech communities and open-source development.',
+    date: '[2023 – present]',
+    role: 'BSc Information Technology',
+    org: 'HELP University · CGPA 3.32',
+    desc: 'Software development, system design, data analysis and UI/UX principles — with academic and personal projects across Java, Python, JavaScript, Angular, Django and Laravel.',
+    delay: '240',
+    last: true,
   },
 ]
 
-function ExpItem({ item }) {
-  const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true })
-
-  return (
-    <div
-      ref={ref}
-      className="exp-item reveal"
-      style={{
-        opacity: inView ? 1 : 0, transform: inView ? 'none' : 'translateY(28px)',
-        transition: 'opacity 0.7s ease, transform 0.7s ease',
-      }}
-    >
-      <div className="exp-period">{item.period}</div>
-      <div>
-        <div className="exp-role">{item.role}</div>
-        <div className="exp-company"
-          dangerouslySetInnerHTML={{ __html: item.company }}
-        />
-        <p className="exp-desc">{item.desc}</p>
-      </div>
-    </div>
-  )
-}
-
 export default function Experience() {
-  const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true })
-
   return (
-    <section id="experience">
-      <div
-        ref={ref}
-        style={{
-          opacity: inView ? 1 : 0, transform: inView ? 'none' : 'translateY(28px)',
-          transition: 'opacity 0.7s ease, transform 0.7s ease',
-        }}
-      >
-        <div className="sec-label">05 / Experience</div>
-        <h2 className="sec-title">Where I've<br />Worked &amp; Learned</h2>
+    <section id="experience" className="sec">
+      <div className="sec-head" data-rv="up">
+        <h2 className="sec-title">
+          <span className="acc">#</span>
+          <span data-scr="">experience</span>
+        </h2>
+        <div className="sec-line" data-line="" style={{ maxWidth: 280 }} />
       </div>
-
       <div className="exp-list">
-        {experience.map((item, i) => (
-          <ExpItem key={i} item={item} />
+        {ITEMS.map((it) => (
+          <div key={it.role} className="exp-item" data-rv="left" data-rvd={it.delay ?? undefined}>
+            <div className="exp-date">{it.date}</div>
+            <div className={`exp-body${it.last ? ' exp-body--last' : ''}`}>
+              <span className={`exp-dot${it.last ? ' exp-dot--fill' : ''}`} aria-hidden="true" />
+              <div className="exp-role">{it.role}</div>
+              <div className="exp-org">
+                <span className="acc">@</span> {it.org}
+              </div>
+              <p className="exp-desc">{it.desc}</p>
+            </div>
+          </div>
         ))}
       </div>
     </section>

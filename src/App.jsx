@@ -1,90 +1,208 @@
-import { useEffect, useRef } from 'react'
-import Navbar     from './components/Navbar'
-import Hero       from './components/Hero'
-import About      from './components/About'
-import Projects   from './components/Projects'
-import Skills     from './components/Skills'
-import AITools    from './components/AITools'
+import { useEffect, useRef, useState } from 'react'
+import { PROJECTS } from './data/projects'
+import { initPageEffects } from './fx'
+import Boot from './components/Boot'
+import Background from './components/Background'
+import SocialRail from './components/SocialRail'
+import Navbar from './components/Navbar'
+import MobileMenu from './components/MobileMenu'
+import Hero from './components/Hero'
+import Quote from './components/Quote'
+import Marquee from './components/Marquee'
+import Projects from './components/Projects'
+import Skills from './components/Skills'
+import About from './components/About'
 import Experience from './components/Experience'
-import Contact    from './components/Contact'
-import Footer     from './components/Footer'
+import AIWorkflow from './components/AIWorkflow'
+import Contact from './components/Contact'
+import Footer from './components/Footer'
+import CommandPalette from './components/CommandPalette'
+import ProjectModal from './components/ProjectModal'
+
+// Site-level knobs (the design's configurable props).
+const SETTINGS = {
+  accent: '#C778DD', // options: #C778DD · #61AFEF · #98C379 · #E5C07B
+  cursorFx: true,
+  showAiSection: true,
+}
+
+const ACCENTS = {
+  purple: '#C778DD',
+  blue: '#61AFEF',
+  green: '#98C379',
+  yellow: '#E5C07B',
+}
+
+// Command palette entries: [verb, arg] pairs dispatched in runCmd.
+const COMMANDS = [
+  { cmd: 'cd home', desc: 'jump to top', action: ['jump', 'home'] },
+  { cmd: 'cd projects', desc: 'jump to projects', action: ['jump', 'projects'] },
+  { cmd: 'cd skills', desc: 'jump to skills', action: ['jump', 'skills'] },
+  { cmd: 'cd about-me', desc: 'jump to about', action: ['jump', 'about-me'] },
+  { cmd: 'cd experience', desc: 'jump to experience', action: ['jump', 'experience'] },
+  { cmd: 'cd contacts', desc: 'jump to contacts', action: ['jump', 'contacts'] },
+  { cmd: 'open github', desc: 'github.com/Vanz2710 ↗', action: ['open', 'https://github.com/Vanz2710'] },
+  { cmd: 'open linkedin', desc: 'linkedin.com/in/vancetindoc ↗', action: ['open', 'https://linkedin.com/in/vancetindoc/'] },
+  { cmd: 'mail vance', desc: 'compose an email', action: ['mail', 'mailto:vancetindoc@gmail.com'] },
+  { cmd: 'accent purple', desc: 'theme accent → purple', action: ['accent', 'purple'] },
+  { cmd: 'accent blue', desc: 'theme accent → blue', action: ['accent', 'blue'] },
+  { cmd: 'accent green', desc: 'theme accent → green', action: ['accent', 'green'] },
+  { cmd: 'accent yellow', desc: 'theme accent → yellow', action: ['accent', 'yellow'] },
+  { cmd: 'whoami', desc: 'print identity', action: ['toast', 'vance tindoc — full-stack developer · kuala lumpur'] },
+  { cmd: 'sudo hire-me', desc: 'run with elevated privileges', action: ['hire'] },
+]
+
+function jump(id) {
+  const el = document.getElementById(id)
+  if (!el) return
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: 'smooth' })
+}
 
 export default function App() {
-  const cursorRef     = useRef(null)
-  const cursorRingRef = useRef(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [modalId, setModalId] = useState(null)
+  const [showAll, setShowAll] = useState(false)
+  const [palOpen, setPalOpen] = useState(false)
+  const [palQuery, setPalQuery] = useState('')
+  const [palSel, setPalSel] = useState(0)
+  const [toast, setToast] = useState('')
+  const [accentOverride, setAccentOverride] = useState(null)
+  const toastTimer = useRef(null)
 
+  const accent = accentOverride ?? SETTINGS.accent
+
+  const openPalette = () => {
+    setPalOpen(true)
+    setPalQuery('')
+    setPalSel(0)
+  }
+  const closePalette = () => setPalOpen(false)
+
+  const showToast = (msg) => {
+    clearTimeout(toastTimer.current)
+    setToast(msg)
+    toastTimer.current = setTimeout(() => setToast(''), 2800)
+  }
+
+  const runCmd = (c) => {
+    closePalette()
+    const [verb, arg] = c.action
+    if (verb === 'jump') jump(arg)
+    else if (verb === 'open') window.open(arg, '_blank')
+    else if (verb === 'mail') window.location.assign(arg)
+    else if (verb === 'accent') {
+      setAccentOverride(ACCENTS[arg])
+      showToast('accent set to ' + arg)
+    } else if (verb === 'toast') showToast(arg)
+    else if (verb === 'hire') {
+      jump('contacts')
+      showToast('permission granted — inbox unlocked')
+    }
+  }
+
+  const q = palQuery.trim().toLowerCase()
+  const filteredCmds = q ? COMMANDS.filter((c) => (c.cmd + ' ' + c.desc).toLowerCase().includes(q)) : COMMANDS
+
+  /* one-time imperative page effects (boot, reveals, cursor, parallax, ...) */
+  useEffect(() => initPageEffects({ cursorFx: SETTINGS.cursorFx }), [])
+
+  /* body scroll lock while any overlay is open */
   useEffect(() => {
-    const cursor = cursorRef.current
-    const ring   = cursorRingRef.current
-    let mx = 0, my = 0, rx = 0, ry = 0
+    document.body.style.overflow = menuOpen || palOpen || modalId !== null ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [menuOpen, palOpen, modalId])
 
-    const onMove = e => { mx = e.clientX; my = e.clientY }
-    document.addEventListener('mousemove', onMove)
-
-    let animId
-    const anim = () => {
-      if (cursor) { cursor.style.left = mx - 5 + 'px'; cursor.style.top = my - 5 + 'px' }
-      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12
-      if (ring) { ring.style.left = rx - 16 + 'px'; ring.style.top = ry - 16 + 'px' }
-      animId = requestAnimationFrame(anim)
+  /* app-wide keyboard shortcuts */
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault()
+        if (palOpen) {
+          setPalOpen(false)
+        } else {
+          setPalOpen(true)
+          setPalQuery('')
+          setPalSel(0)
+        }
+        return
+      }
+      const t = e.target
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')
+      if (e.key === '/' && !typing && !palOpen && modalId === null) {
+        e.preventDefault()
+        setPalOpen(true)
+        setPalQuery('')
+        setPalSel(0)
+        return
+      }
+      if (e.key === 'Escape') {
+        if (palOpen) { setPalOpen(false); return }
+        if (modalId !== null) setModalId(null)
+        if (menuOpen) setMenuOpen(false)
+      }
     }
-    anim()
-
-    const addHover = () => { cursor?.classList.add('hover'); ring?.classList.add('hover') }
-    const rmHover  = () => { cursor?.classList.remove('hover'); ring?.classList.remove('hover') }
-
-    const attachHover = () => {
-      document.querySelectorAll('a, button').forEach(el => {
-        el.addEventListener('mouseenter', addHover)
-        el.addEventListener('mouseleave', rmHover)
-      })
-    }
-    attachHover()
-
-    // Re-attach when DOM changes
-    const domObs = new MutationObserver(attachHover)
-    domObs.observe(document.body, { childList: true, subtree: true })
-
-    // Scroll reveal for .reveal and .reveal-left elements
-    const revObs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') })
-    }, { threshold: 0.1 })
-    document.querySelectorAll('.reveal, .reveal-left').forEach(el => revObs.observe(el))
-
-    // Re-observe after DOM changes
-    const revDomObs = new MutationObserver(() => {
-      document.querySelectorAll('.reveal:not(.visible), .reveal-left:not(.visible)').forEach(el => revObs.observe(el))
-    })
-    revDomObs.observe(document.body, { childList: true, subtree: true })
-
-    if ('ontouchstart' in window) {
-      if (cursor) cursor.style.display = 'none'
-      if (ring)   ring.style.display   = 'none'
-      document.body.style.cursor = 'auto'
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', onMove)
-      cancelAnimationFrame(animId)
-      domObs.disconnect()
-      revObs.disconnect()
-      revDomObs.disconnect()
-    }
-  }, [])
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [palOpen, modalId, menuOpen])
 
   return (
-    <>
-      <div ref={cursorRef}     className="cursor" />
-      <div ref={cursorRingRef} className="cursor-ring" />
-      <Navbar />
-      <Hero />
-      <About />
-      <Projects />
-      <Skills />
-      <AITools />
-      <Experience />
-      <Contact />
+    <div className="site" data-cfx={SETTINGS.cursorFx ? '1' : '0'} style={{ '--ac': accent }}>
+      <a href="#home" className="skip">skip to content ~~&gt;</a>
+
+      <Boot />
+      <Background />
+      <div className="progress" data-prog="" />
+      <div className="cursor-dot" data-cur-dot="" />
+      <SocialRail />
+
+      <Navbar
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen((v) => !v)}
+        onOpenPalette={openPalette}
+      />
+      {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
+
+      <main className="main pad-x">
+        <Hero />
+        <Quote />
+        <Marquee />
+        <Projects showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} onOpen={setModalId} />
+        <Skills />
+        <About />
+        <Experience />
+        {SETTINGS.showAiSection && <AIWorkflow />}
+        <Contact />
+      </main>
+
+      <button
+        className="top-btn"
+        data-top=""
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Back to top"
+      >
+        cd ~
+      </button>
+
       <Footer />
-    </>
+
+      {palOpen && (
+        <CommandPalette
+          commands={filteredCmds}
+          sel={palSel}
+          onQuery={(v) => { setPalQuery(v); setPalSel(0) }}
+          onSel={setPalSel}
+          onRun={runCmd}
+          onClose={closePalette}
+        />
+      )}
+
+      {toast && (
+        <div className="toast" role="status">
+          <span className="acc">✓</span> {toast}
+        </div>
+      )}
+
+      {modalId !== null && <ProjectModal project={PROJECTS[modalId]} onClose={() => setModalId(null)} />}
+    </div>
   )
 }

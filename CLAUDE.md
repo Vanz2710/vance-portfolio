@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All commands must be run from `c:\vance_portfolio\vance-portfolio\` (the project root, not the parent folder).
+Run all commands from the repo root (this folder).
 
 ```bash
 npm run dev       # start dev server at http://localhost:5173
@@ -13,10 +13,7 @@ npm run preview   # serve the dist/ build locally
 npm run lint      # ESLint over all .js/.jsx files
 ```
 
-If npm registry is unreachable (SSL/network error), install offline from cache:
-```bash
-npm install --offline --no-audit --no-fund
-```
+Deployment target is Vercel (auto-detected Vite static build, output `dist/`). No router, so no rewrites/vercel.json needed.
 
 ## Architecture
 
@@ -24,40 +21,43 @@ Single-page React app with no router — all sections are in one scrollable page
 
 **Entry point:** `index.html` → `src/main.jsx` → `src/App.jsx`
 
-**`src/App.jsx`** is the shell. It owns two global side-effects via `useEffect`:
-1. **Custom cursor** — animates `.cursor` (snaps) and `.cursor-ring` (0.12 easing lag) via `requestAnimationFrame`. Re-attaches hover listeners on DOM mutations via `MutationObserver`.
-2. **Scroll reveal** — `IntersectionObserver` watches all `.reveal` and `.reveal-left` elements and adds `.visible` when they enter the viewport. Also re-observes on DOM mutations so dynamically-rendered elements (e.g. opened project drawers) are picked up.
+**`src/App.jsx`** is the shell. It owns all cross-cutting UI state (mobile menu, case-study modal, "view all" projects, command palette + its filtered command list, toast, accent-color override) plus:
+- `SETTINGS` at the top — accent color default, `cursorFx` toggle, `showAiSection` toggle
+- body scroll-lock while any overlay is open
+- global keyboard shortcuts: `Ctrl/Cmd+K` and `/` open the command palette, `Escape` closes palette → modal → menu
 
-**`src/components/`** — one file per page section, rendered in order:
-`Navbar → Hero → About → Projects → Skills → AITools → Experience → Contact → Footer`
+**`src/fx.js`** — all imperative page effects, initialized once from App via `useEffect` and driven by data-attributes (returns a cleanup function; StrictMode-safe):
+boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider draw-in (`data-line`), card tilt (`data-hov`), magnetic buttons (`data-mag`), scroll reveals (`data-rv`/`data-rvd`), heading scramble (`data-scr`), counters (`data-cnt`), typing loop (`data-typed`), scroll progress/nav shrink/back-to-top (`data-prog`/`data-nav`/`data-top`), background + section parallax (`data-grid`/`data-bgp`/`data-bgr`/`data-plx`), custom cursor + spotlight (`data-cur-dot`/`data-spot`), active nav-link tracking (`data-nl-t`). All effects respect `prefers-reduced-motion`.
 
-**`src/hooks/useInView.js`** — custom `IntersectionObserver` hook (replaces `react-intersection-observer` which isn't in cache). Returns `{ ref, inView }`. Used by individual components for their own entrance animations via inline `opacity`/`transform` styles.
+**`src/data/projects.js`** — the five case studies (card copy + modal copy, metrics, bullets, tags, GitHub links).
+
+**`src/components/`** — one file per piece, rendered in this order inside App:
+`Boot → Background → SocialRail → Navbar (+ MobileMenu) → Hero → Quote → Marquee → Projects → Skills → About → Experience → AIWorkflow → Contact → Footer`, plus overlays `CommandPalette`, `ProjectModal`, and the toast (inline in App). `Icons.jsx` holds shared SVGs + logo mark.
 
 ## Styling
 
-**Tailwind CSS v4** — not v3. Key differences:
-- Config is in `src/index.css` via `@import "tailwindcss"` + `@theme {}` block, **not** `tailwind.config.js` + PostCSS
-- Vite plugin: `@tailwindcss/vite` in `vite.config.js` (no PostCSS config needed — `postcss.config.js` must return empty object if it exists to avoid autoprefixer conflicts)
-- Design tokens in `@theme {}` are exposed as CSS custom properties (`--color-bg`, `--color-orange`, etc.)
+Plain CSS (no Tailwind). Everything lives in `src/index.css` using semantic class names (`.pcard`, `.exp-item`, `.pal-item`, …).
 
-**CSS class approach:** Components use semantic class names (`.sec-label`, `.stat-box`, `.exp-item`, etc.) defined in `src/index.css`, not Tailwind utilities. All section and component styles live in `index.css` — this is intentional to mirror the original HTML prototype.
-
-**Light/dark theme:** `html.light` class toggled on `<html>` by Navbar; persisted in `localStorage`. All colors use `var(--color-*)` CSS custom properties overridden in the `html.light {}` block.
-
-**Scroll reveal classes:**
-- `.reveal` — fade up (used on most elements)
-- `.reveal-left` — slide in from left (used on project accordion rows)
-- Both need `.visible` added (done by the `IntersectionObserver` in `App.jsx`)
+- **Font:** Fira Code via Google Fonts (`index.html`).
+- **Palette:** One Dark — bg `#282C33`, panels `#23272E`/`#21252B`, fg `#ABB2BF`, dim `#5C6370`, red `#E06C75`, yellow `#E5C07B`, green `#98C379`.
+- **Accent theming:** every accent usage goes through `var(--ac, #C778DD)`, set inline on `.site` from React state. The command palette's `accent purple|blue|green|yellow` commands swap it at runtime. Hover fills/shadows use `color-mix(in oklab, var(--ac) N%, transparent)`.
+- **Breakpoints:** `max-width: 920px` (single-column hero/skills/about/contact/ai, hide social rail + skills deco) and `max-width: 820px` (burger menu replaces nav links, single-column experience, `.pad-x` gutters drop to 22px).
+- Reveal/tilt/parallax styling is applied by `src/fx.js` via inline styles on the data-attributed elements; keyframes live in `index.css`.
 
 ## Key files
 
 | File | Purpose |
 |---|---|
-| `src/index.css` | All CSS — theme tokens, component classes, animations, responsive breakpoints |
-| `public/vance.jpg` | Hero profile photo (extracted from base64 in original HTML prototype) |
-| `public/vance-cv.pdf` | CV download (must be placed manually; linked from Hero "Download CV ↓") |
-| `index.html` | Page title, meta/OG tags, Google Fonts preload (Barlow + Barlow Condensed) |
+| `src/index.css` | All CSS — reset, keyframes, component classes, responsive breakpoints |
+| `src/fx.js` | All imperative effects (see above) |
+| `src/data/projects.js` | Project/case-study content |
+| `public/vance.jpg` | Hero profile photo |
+| `public/projects/` | Optional project screenshots: `<slug>.png` or `.jpg` (e.g. `fortiroom.png`); cards fall back to a labelled placeholder when missing |
+| `index.html` | Title, meta/OG tags, Fira Code font link |
+| `public/favicon.svg` | Two-squares logo mark |
 
-## Offline / network constraints
+## Gotchas
 
-This project was set up without npm registry access. All packages were installed from local npm cache. Do not add new npm dependencies without confirming they are available offline or the network is available.
+- The contact form POSTs to FormSubmit's AJAX endpoint (`FORM_ENDPOINT` in `src/components/Contact.jsx`) — no backend or API key. FormSubmit requires a one-time activation: the first submission emails an activation link to the inbox; until it's clicked, submissions aren't delivered.
+- `initPageEffects` measures element positions on mount for reveals/parallax — keep fixed heights on hero photo (440px) and card shots (172px) so measurements don't shift.
+- Special glyphs (▪ ⟫ ↗ → ↵ ✕ ≡) are literal UTF-8 in source; keep files UTF-8 encoded.

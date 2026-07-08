@@ -1,51 +1,54 @@
-import { useInView } from '../hooks/useInView'
+const NBSP = ' '
 
-const columns = [
+const GROUPS = [
   {
     title: 'Frontend',
-    items: ['JavaScript', 'HTML / CSS', 'Vue 3', 'Angular', 'React', 'Bootstrap', 'Tailwind CSS'],
+    delay: null,
+    items: ['JavaScript', 'HTML / CSS', 'Vue 3', 'Angular', 'React', 'Bootstrap', 'Tailwind CSS', 'WordPress'],
   },
   {
     title: 'Backend',
+    delay: '90',
     items: ['Laravel', 'Django', 'Node.js', 'Java', 'REST APIs', 'MySQL', 'MongoDB'],
   },
   {
     title: 'Tools & Infra',
-    items: ['Git', 'VS Code', 'Postman', 'AWS', 'Tableau', 'Jupyter Notebook', 'Splunk'],
+    delay: '180',
+    items: ['Git', 'VS Code', 'Postman', 'AWS', 'Tableau', 'Jupyter', 'Splunk'],
   },
   {
     title: 'Design & Other',
-    items: ['Figma', 'UI/UX Principles', 'Agile', 'System Design', 'Data Analysis', 'OOP', 'QA'],
+    delay: '270',
+    items: ['Figma', 'UI/UX', 'Agile', 'System Design', 'Data Analysis', 'OOP', 'QA'],
   },
 ]
 
 export default function Skills() {
-  const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true })
-
   return (
-    <section id="skills">
-      <div
-        ref={ref}
-        style={{
-          opacity: inView ? 1 : 0, transform: inView ? 'none' : 'translateY(28px)',
-          transition: 'opacity 0.7s ease, transform 0.7s ease',
-        }}
-      >
-        <div className="sec-label">03 / Skills</div>
-        <h2 className="sec-title">What I Work With.</h2>
+    <section id="skills" className="sec">
+      <div className="sec-head" data-rv="up">
+        <h2 className="sec-title">
+          <span className="acc">#</span>
+          <span data-scr="">skills</span>
+        </h2>
+        <div className="sec-line" data-line="" style={{ maxWidth: 260 }} />
       </div>
-
-      <div className="skills-cols">
-        {columns.map((col, i) => (
-          <div key={col.title} className="skill-col">
-            <div className="skill-col-title">{col.title}</div>
-            <ul className="skill-list">
-              {col.items.map(item => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      <div className="skills-grid">
+        <div className="skills-deco">
+          <div data-plx=".14" style={{ position: 'absolute', left: 8, top: 10, width: 92, height: 92, backgroundImage: 'radial-gradient(rgba(171,178,191,.6) 1.2px,transparent 1.2px)', backgroundSize: '16px 16px' }} />
+          <div data-plx=".08" style={{ position: 'absolute', right: 26, top: 44, width: 86, height: 86, border: '1px solid rgba(171,178,191,.5)', animation: 'floaty 7s ease-in-out infinite' }} />
+          <div data-plx=".18" style={{ position: 'absolute', left: 120, top: 150, width: 70, height: 70, backgroundImage: 'radial-gradient(rgba(171,178,191,.45) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px' }} />
+          <div data-plx=".1" style={{ position: 'absolute', left: 34, top: 196, width: 62, height: 62, border: '1px solid var(--ac,#C778DD)' }} />
+          <div data-plx=".1" style={{ position: 'absolute', left: 66, top: 228, width: 62, height: 62, border: '1px solid color-mix(in oklab, var(--ac,#C778DD) 55%, transparent)' }} />
+        </div>
+        <div className="skills-cards">
+          {GROUPS.map((g) => (
+            <div key={g.title} className="skill-box" data-rv="up" data-rvd={g.delay ?? undefined}>
+              <div className="skill-box-title">{g.title}</div>
+              <div className="skill-box-body">{g.items.join(NBSP + ' ')}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )

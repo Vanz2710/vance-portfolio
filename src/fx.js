@@ -1,0 +1,346 @@
+/*
+ * Global page effects (DOM-driven, hooked up once from App.jsx).
+ * Everything works off data-attributes so components stay declarative:
+ *   data-boot / data-bl   boot sequence overlay + lines
+ *   data-gl               hero keyword glitch
+ *   data-line             section divider draw-in
+ *   data-hov              3D card tilt (pointer-fine only)
+ *   data-mag              magnetic buttons
+ *   data-rv / data-rvd    scroll reveals ("up" | "left", delay ms)
+ *   data-scr              heading scramble-in
+ *   data-cnt / -dec       animated counters
+ *   data-typed            hero typing loop
+ *   data-prog / data-nav / data-top   scroll progress, nav shrink, back-to-top
+ *   data-grid / data-bgp / data-bgr / data-plx   background + section parallax
+ *   data-spot / data-cur-dot          cursor spotlight + custom cursor
+ *   data-nl-t             active nav-link highlighting
+ * Returns a cleanup function (safe under React StrictMode double-mount).
+ */
+export function initPageEffects({ cursorFx = true } = {}) {
+  const cleanups = []
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  /* ---- boot sequence ---- */
+  const boot = document.querySelector('[data-boot]')
+  if (boot) {
+    const lines = boot.querySelectorAll('[data-bl]')
+    const timers = []
+    const done = () => {
+      boot.style.transform = 'translateY(-101%)'
+      boot.style.opacity = '.5'
+      timers.push(setTimeout(() => { boot.style.display = 'none' }, 580))
+    }
+    if (reduce) {
+      boot.style.display = 'none'
+    } else {
+      lines.forEach((l, i) => timers.push(setTimeout(() => { l.style.opacity = '1' }, 150 + i * 190)))
+      timers.push(setTimeout(done, 150 + lines.length * 190 + 430))
+      const skip = () => { timers.forEach(clearTimeout); done() }
+      boot.addEventListener('click', skip, { once: true })
+      cleanups.push(() => boot.removeEventListener('click', skip))
+    }
+    cleanups.push(() => timers.forEach(clearTimeout))
+  }
+
+  /* ---- hero keyword glitch ---- */
+  if (!reduce) {
+    const gls = document.querySelectorAll('[data-gl]')
+    const glitchTimers = []
+    const glitch = () => {
+      gls.forEach((el, i) => {
+        glitchTimers.push(setTimeout(() => {
+          el.style.textShadow = '2px 0 rgba(97,175,239,.85), -2px 0 rgba(224,108,117,.85)'
+          el.style.transform = 'skewX(-4deg)'
+          glitchTimers.push(setTimeout(() => {
+            el.style.textShadow = '-2px 0 rgba(97,175,239,.85), 2px 0 rgba(224,108,117,.85)'
+            el.style.transform = 'skewX(3deg) translateX(-1px)'
+          }, 70))
+          glitchTimers.push(setTimeout(() => {
+            el.style.textShadow = 'none'
+            el.style.transform = 'none'
+          }, 150))
+        }, i * 300))
+      })
+    }
+    const gli = setInterval(glitch, 4700)
+    glitchTimers.push(setTimeout(glitch, 2300))
+    cleanups.push(() => { clearInterval(gli); glitchTimers.forEach(clearTimeout) })
+  }
+
+  /* ---- section divider line draw ---- */
+  const lineEls = Array.from(document.querySelectorAll('[data-line]'))
+  if (!reduce) {
+    lineEls.forEach((el) => {
+      el.style.transformOrigin = 'left center'
+      el.style.transform = 'scaleX(0)'
+    })
+    const lnObs = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return
+        lnObs.unobserve(en.target)
+        en.target.style.transition = 'transform 1s cubic-bezier(.22,1,.36,1) .2s'
+        requestAnimationFrame(() => { en.target.style.transform = 'scaleX(1)' })
+      })
+    }, { threshold: 0.4 })
+    lineEls.forEach((el) => lnObs.observe(el))
+    cleanups.push(() => lnObs.disconnect())
+  }
+
+  /* ---- card tilt + magnetic buttons (delegated) ---- */
+  if (window.matchMedia('(hover:hover) and (pointer:fine)').matches && !reduce) {
+    let tiltEl = null
+    let magEl = null
+    const onPOver = (e) => {
+      const c = e.target.closest ? e.target.closest('[data-hov]') : null
+      if (c !== tiltEl) {
+        if (tiltEl) {
+          tiltEl.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1), border-color .25s, box-shadow .25s'
+          tiltEl.style.transform = 'none'
+        }
+        tiltEl = c
+        if (tiltEl) tiltEl.style.transition = 'transform .12s ease-out, border-color .25s, box-shadow .25s'
+      }
+      const m = e.target.closest ? e.target.closest('[data-mag]') : null
+      if (m !== magEl) {
+        if (magEl) magEl.style.transform = ''
+        magEl = m
+        if (magEl) magEl.style.transition = 'transform .25s cubic-bezier(.22,1,.36,1), background .2s, box-shadow .2s'
+      }
+    }
+    const onPMove = (e) => {
+      if (tiltEl) {
+        const r = tiltEl.getBoundingClientRect()
+        const px = (e.clientX - r.left) / r.width - 0.5
+        const py = (e.clientY - r.top) / r.height - 0.5
+        tiltEl.style.transform =
+          'perspective(900px) rotateX(' + (-py * 6).toFixed(2) + 'deg) rotateY(' + (px * 6).toFixed(2) + 'deg) translateY(-4px)'
+      }
+      if (magEl) {
+        const r = magEl.getBoundingClientRect()
+        const dx = e.clientX - (r.left + r.width / 2)
+        const dy = e.clientY - (r.top + r.height / 2)
+        magEl.style.transform = 'translate(' + (dx * 0.22).toFixed(1) + 'px,' + (dy * 0.3).toFixed(1) + 'px)'
+      }
+    }
+    document.addEventListener('pointerover', onPOver)
+    document.addEventListener('pointermove', onPMove)
+    cleanups.push(() => {
+      document.removeEventListener('pointerover', onPOver)
+      document.removeEventListener('pointermove', onPMove)
+    })
+  }
+
+  /* ---- scroll reveals ---- */
+  const rvEls = Array.from(document.querySelectorAll('[data-rv]'))
+  const vh0 = window.innerHeight
+  rvEls.forEach((el) => {
+    const r = el.getBoundingClientRect()
+    if (reduce || r.top < vh0 * 0.92) return // already in view — leave visible
+    el.__hidden = true
+    el.style.opacity = '0'
+    const dir = el.getAttribute('data-rv')
+    el.style.transform = dir === 'left' ? 'translateX(-48px)' : 'translateY(32px)'
+  })
+  const rvObs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return
+      const el = en.target
+      rvObs.unobserve(el)
+      if (!el.__hidden) return
+      const d = parseInt(el.getAttribute('data-rvd') || '0', 10)
+      el.style.transition =
+        'opacity .75s cubic-bezier(.22,1,.36,1) ' + d + 'ms, transform .75s cubic-bezier(.22,1,.36,1) ' + d + 'ms'
+      requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'none' })
+    })
+  }, { threshold: 0.12 })
+  rvEls.forEach((el) => rvObs.observe(el))
+  cleanups.push(() => rvObs.disconnect())
+
+  /* ---- heading scramble ---- */
+  const CH = '#/<>[]{}=+*_\\'
+  const scrIntervals = []
+  const scrObs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return
+      const el = en.target
+      scrObs.unobserve(el)
+      if (reduce || el.__done) return
+      el.__done = true
+      const orig = el.textContent
+      let f = 0
+      const total = 20
+      const iv = setInterval(() => {
+        f++
+        const k = Math.floor((f / total) * orig.length)
+        let out = orig.slice(0, k)
+        for (let i = k; i < orig.length; i++) out += CH[Math.floor(Math.random() * CH.length)]
+        el.textContent = out
+        if (f >= total) { clearInterval(iv); el.textContent = orig }
+      }, 34)
+      scrIntervals.push(iv)
+    })
+  }, { threshold: 0.6 })
+  document.querySelectorAll('[data-scr]').forEach((el) => scrObs.observe(el))
+  cleanups.push(() => { scrObs.disconnect(); scrIntervals.forEach(clearInterval) })
+
+  /* ---- animated counters ---- */
+  const cntObs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return
+      const el = en.target
+      cntObs.unobserve(el)
+      if (reduce || el.__done) return
+      el.__done = true
+      const target = parseFloat(el.getAttribute('data-cnt'))
+      const dec = parseInt(el.getAttribute('data-cnt-dec') || '0', 10)
+      const t0 = performance.now()
+      const dur = 1100
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / dur)
+        const ease = 1 - Math.pow(1 - t, 3)
+        el.textContent = (target * ease).toFixed(dec)
+        if (t < 1) requestAnimationFrame(step)
+        else el.textContent = target.toFixed(dec)
+      }
+      requestAnimationFrame(step)
+    })
+  }, { threshold: 0.6 })
+  document.querySelectorAll('[data-cnt]').forEach((el) => cntObs.observe(el))
+  cleanups.push(() => cntObs.disconnect())
+
+  /* ---- hero typing loop ---- */
+  const typedEl = document.querySelector('[data-typed]')
+  if (typedEl) {
+    const roles = ['full-stack developer', 'Laravel + Vue 3 builder', 'IoT tinkerer', 'clean-code advocate']
+    let ri = 0
+    let ci = 0
+    let del = false
+    let tt
+    const tick = () => {
+      const w = roles[ri]
+      if (!del) {
+        ci++
+        typedEl.textContent = w.slice(0, ci)
+        if (ci === w.length) { del = true; tt = setTimeout(tick, 1700); return }
+      } else {
+        ci--
+        typedEl.textContent = w.slice(0, ci)
+        if (ci === 0) { del = false; ri = (ri + 1) % roles.length }
+      }
+      tt = setTimeout(tick, del ? 36 : 74)
+    }
+    tt = setTimeout(tick, 700)
+    cleanups.push(() => clearTimeout(tt))
+  }
+
+  /* ---- scroll: progress bar, nav shrink, back-to-top, parallax ---- */
+  const prog = document.querySelector('[data-prog]')
+  const nav = document.querySelector('[data-nav]')
+  const topBtn = document.querySelector('[data-top]')
+  const bgGrid = document.querySelector('[data-grid]')
+  const bgp = Array.from(document.querySelectorAll('[data-bgp]'))
+  const bgr = Array.from(document.querySelectorAll('[data-bgr]'))
+  const plx = Array.from(document.querySelectorAll('[data-plx]'))
+  plx.forEach((el) => {
+    const r = el.getBoundingClientRect()
+    el.__base = r.top + window.scrollY + r.height / 2
+  })
+  let ticking = false
+  const onScroll = () => {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
+      ticking = false
+      const sc = window.scrollY
+      const dh = document.documentElement.scrollHeight - window.innerHeight
+      if (prog) prog.style.width = (dh > 0 ? (sc / dh) * 100 : 0) + '%'
+      if (nav) {
+        nav.style.paddingTop = sc > 60 ? '12px' : '22px'
+        nav.style.paddingBottom = sc > 60 ? '12px' : '22px'
+        nav.style.boxShadow = sc > 60 ? '0 8px 24px rgba(0,0,0,.35)' : 'none'
+      }
+      if (topBtn) {
+        const show = sc > 600
+        topBtn.style.opacity = show ? '1' : '0'
+        topBtn.style.pointerEvents = show ? 'auto' : 'none'
+        topBtn.style.transform = show ? 'none' : 'translateY(12px)'
+      }
+      if (!reduce) {
+        if (bgGrid) bgGrid.style.backgroundPosition = '0 ' + (-sc * 0.06).toFixed(1) + 'px'
+        bgp.forEach((el) => {
+          const f = parseFloat(el.getAttribute('data-bgp')) || 0.05
+          el.style.translate = '0 ' + (-sc * f).toFixed(1) + 'px'
+        })
+        bgr.forEach((el) => { el.style.rotate = (sc * 0.03).toFixed(2) + 'deg' })
+        const vh = window.innerHeight
+        plx.forEach((el) => {
+          const s = parseFloat(el.getAttribute('data-plx')) || 0.1
+          const mid = el.__base - sc - vh / 2
+          el.style.translate = '0 ' + (-mid * s).toFixed(1) + 'px'
+        })
+      }
+    })
+  }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+  cleanups.push(() => window.removeEventListener('scroll', onScroll))
+
+  /* ---- active nav link ---- */
+  const navObs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return
+      const id = en.target.id
+      document.querySelectorAll('[data-nl-t]').forEach((sp) => {
+        const on = sp.getAttribute('data-nl-t') === id
+        sp.style.color = on ? '#fff' : '#ABB2BF'
+        sp.style.fontWeight = on ? '600' : '400'
+      })
+    })
+  }, { rootMargin: '-40% 0px -55% 0px' })
+  document.querySelectorAll('section[id]').forEach((s) => navObs.observe(s))
+  cleanups.push(() => navObs.disconnect())
+
+  /* ---- custom cursor + spotlight ---- */
+  const dot = document.querySelector('[data-cur-dot]')
+  if (dot && window.matchMedia('(hover:hover) and (pointer:fine)').matches && !reduce) {
+    const spot = document.querySelector('[data-spot]')
+    let mx = -100
+    let my = -100
+    let seen = false
+    let hov = false
+    let sc = 1
+    let spx = -1000
+    let spy = -1000
+    let raf
+    const onMove = (e) => { mx = e.clientX; my = e.clientY; seen = true }
+    const onOver = (e) => {
+      hov = !!(e.target.closest && e.target.closest('a,button,[data-hov],input,textarea'))
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseover', onOver)
+    const loop = () => {
+      const on = cursorFx && seen
+      dot.style.opacity = on ? '1' : '0'
+      sc += ((hov ? 2.2 : 1) - sc) * 0.2
+      dot.style.boxShadow = hov
+        ? '0 0 24px var(--ac,#C778DD), 0 0 8px var(--ac,#C778DD)'
+        : '0 0 14px color-mix(in oklab, var(--ac,#C778DD) 75%, transparent)'
+      dot.style.transform = 'translate(' + (mx - 5) + 'px,' + (my - 5) + 'px) scale(' + sc.toFixed(3) + ')'
+      if (spot) {
+        spx += (mx - spx) * 0.06
+        spy += (my - spy) * 0.06
+        spot.style.opacity = seen ? '1' : '0'
+        spot.style.transform = 'translate(' + (spx - 360).toFixed(1) + 'px,' + (spy - 360).toFixed(1) + 'px)'
+      }
+      raf = requestAnimationFrame(loop)
+    }
+    loop()
+    cleanups.push(() => {
+      cancelAnimationFrame(raf)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseover', onOver)
+    })
+  }
+
+  return () => cleanups.forEach((f) => f())
+}
