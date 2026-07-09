@@ -75,6 +75,7 @@ export default function Projects({ showAll, onToggleAll, onOpen }) {
         <div className="proj-grid proj-grid--more">
           <Card project={PROJECTS[3]} index={3} extraClass="pcard--in1" onOpen={onOpen} />
           <Card project={PROJECTS[4]} index={4} extraClass="pcard--in2" onOpen={onOpen} />
+          <Card project={PROJECTS[5]} index={5} extraClass="pcard--in3" onOpen={onOpen} />
         </div>
       )}
     </section>

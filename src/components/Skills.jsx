@@ -4,17 +4,17 @@ const GROUPS = [
   {
     title: 'Frontend',
     delay: null,
-    items: ['JavaScript', 'HTML / CSS', 'Vue 3', 'Angular', 'React', 'Bootstrap', 'Tailwind CSS', 'WordPress'],
+    items: ['JavaScript', 'HTML / CSS', 'Vue 3', 'Angular', 'React', 'Flutter', 'Bootstrap', 'Tailwind CSS', 'WordPress'],
   },
   {
     title: 'Backend',
     delay: '90',
-    items: ['Laravel', 'Django', 'Node.js', 'Java', 'REST APIs', 'MySQL', 'MongoDB'],
+    items: ['Laravel', 'Django', 'Node.js', 'PHP', 'Python', 'Java', 'REST APIs', 'MySQL', 'PostgreSQL', 'MongoDB'],
   },
   {
     title: 'Tools & Infra',
     delay: '180',
-    items: ['Git', 'VS Code', 'Postman', 'AWS', 'Tableau', 'Jupyter', 'Splunk'],
+    items: ['Git', 'VS Code', 'Postman', 'AWS', 'GCP', 'Docker', 'cPanel', 'Tableau', 'Jupyter', 'Splunk'],
   },
   {
     title: 'Design & Other',

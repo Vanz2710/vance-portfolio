@@ -3,7 +3,7 @@ const ITEMS = [
     date: '[April 2026 – present]',
     role: 'Software Developer Intern',
     org: 'Bluedale Group of Companies',
-    desc: 'Developed a full-stack multi-user CRM from the ground up — designed the database architecture, built RESTful APIs with Laravel, and created a Vue 3 SPA frontend with role-based access control.',
+    desc: 'Developed a full-stack multi-user CRM from the ground up — designed the database architecture, built RESTful APIs with Laravel, and created a Vue 3 SPA frontend with role-based access control. Deployed it to production on cPanel and completed the handover — now building the KL The Guide mobile app with Flutter.',
     delay: null,
   },
   {
