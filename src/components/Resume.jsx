@@ -1,4 +1,4 @@
-// Served from public/ — replace the placeholder PDF with the real CV.
+// Served from public/vance-tindoc-cv.pdf — update that file to refresh the CV.
 const CV_FILE = '/vance-tindoc-cv.pdf'
 
 export default function Resume() {
