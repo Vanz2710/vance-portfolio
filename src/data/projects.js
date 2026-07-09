@@ -78,10 +78,11 @@ export const PROJECTS = [
     status: 'in development',
     role: 'Mobile Developer',
     duration: 'ongoing',
-    github: null,
+    github: 'https://github.com/Vanz2710/KLTG_Android',
     tags: ['Flutter', 'Dart', 'Mobile'],
     cardTags: ['Flutter', 'Dart', 'Mobile'],
     shot: 'kl-the-guide',
+    shotPos: 'top', // portrait phone screenshot — show the app header, not a mid-scroll band
     shotLabel: 'drop KL The Guide screenshot',
     cardDesc:
       "Cross-platform mobile app for Bluedale's KL The Guide — bringing the Kuala Lumpur city guide to iOS and Android with Flutter.",

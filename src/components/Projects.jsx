@@ -12,6 +12,7 @@ function Shot({ project }) {
         <img
           src={`/projects/${project.shot}.${exts[attempt]}`}
           alt=""
+          style={project.shotPos ? { objectPosition: project.shotPos } : undefined}
           onError={() => setAttempt(attempt + 1)}
         />
       ) : (
