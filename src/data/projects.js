@@ -11,7 +11,7 @@ export const PROJECTS = [
     year: '2026',
     status: 'in live testing',
     role: 'Full-Stack Developer',
-    duration: '6 months',
+    duration: '3 months',
     github: 'https://github.com/Vanz2710/DBM_bluedale',
     tags: ['Laravel', 'Vue 3', 'MySQL', 'Sanctum', 'Vite'],
     cardTags: ['Laravel', 'Vue 3', 'MySQL', 'Sanctum', 'Vite'],
