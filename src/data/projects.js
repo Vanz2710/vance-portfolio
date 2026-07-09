@@ -9,7 +9,7 @@ export const PROJECTS = [
     cardName: 'DBM Bluedale — CRM',
     type: 'Web App · 2026',
     year: '2026',
-    status: 'in live testing',
+    status: 'live in production',
     role: 'Full-Stack Developer',
     duration: '3 months',
     github: 'https://github.com/Vanz2710/DBM_bluedale',
@@ -28,11 +28,11 @@ export const PROJECTS = [
       'Sales pipeline with drag-and-drop stage management',
       'RESTful API with Laravel Sanctum token authentication',
       'Vue 3 Composition API frontend with Vite build tooling',
-      'In live-environment testing ahead of cPanel production deployment',
+      'Deployed to production on cPanel — handover to the company completed, with daily maintenance and support',
     ],
     metrics: [
       { value: '3', label: 'role-based access levels' },
-      { value: 'pre-launch', label: 'live testing on InfinityFree' },
+      { value: 'live', label: 'in production on cPanel' },
     ],
   },
   {
