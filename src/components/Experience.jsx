@@ -1,6 +1,6 @@
 const ITEMS = [
   {
-    date: '[2026 – present]',
+    date: '[April 2026 – present]',
     role: 'Software Developer Intern',
     org: 'Bluedale Group of Companies',
     desc: 'Developed a full-stack multi-user CRM from the ground up — designed the database architecture, built RESTful APIs with Laravel, and created a Vue 3 SPA frontend with role-based access control.',
