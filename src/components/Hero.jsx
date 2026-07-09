@@ -18,6 +18,7 @@ export default function Hero() {
         <div className="hero-cta">
           <a href="#contacts" data-mag="" className="btn-acc">Contact me!!</a>
           <a href="#projects" className="link-plain">view projects ~~&gt;</a>
+          <a href="/vance-tindoc-cv.pdf" download="Vance-Tindoc-CV.pdf" className="link-plain">download cv ↓</a>
         </div>
       </div>
       <div className="hero-right" data-rv="up" data-rvd="140">

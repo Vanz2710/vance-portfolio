@@ -13,6 +13,7 @@ import Projects from './components/Projects'
 import Skills from './components/Skills'
 import About from './components/About'
 import Experience from './components/Experience'
+import Resume from './components/Resume'
 import AIWorkflow from './components/AIWorkflow'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
@@ -40,10 +41,12 @@ const COMMANDS = [
   { cmd: 'cd skills', desc: 'jump to skills', action: ['jump', 'skills'] },
   { cmd: 'cd about-me', desc: 'jump to about', action: ['jump', 'about-me'] },
   { cmd: 'cd experience', desc: 'jump to experience', action: ['jump', 'experience'] },
+  { cmd: 'cd resume', desc: 'jump to resume', action: ['jump', 'resume'] },
   { cmd: 'cd contacts', desc: 'jump to contacts', action: ['jump', 'contacts'] },
   { cmd: 'open github', desc: 'github.com/Vanz2710 ↗', action: ['open', 'https://github.com/Vanz2710'] },
   { cmd: 'open linkedin', desc: 'linkedin.com/in/vancetindoc ↗', action: ['open', 'https://linkedin.com/in/vancetindoc/'] },
   { cmd: 'mail vance', desc: 'compose an email', action: ['mail', 'mailto:vancetindoc@gmail.com'] },
+  { cmd: 'download cv', desc: 'save vance-tindoc-cv.pdf', action: ['cv'] },
   { cmd: 'accent purple', desc: 'theme accent → purple', action: ['accent', 'purple'] },
   { cmd: 'accent blue', desc: 'theme accent → blue', action: ['accent', 'blue'] },
   { cmd: 'accent green', desc: 'theme accent → green', action: ['accent', 'green'] },
@@ -94,6 +97,15 @@ export default function App() {
       setAccentOverride(ACCENTS[arg])
       showToast('accent set to ' + arg)
     } else if (verb === 'toast') showToast(arg)
+    else if (verb === 'cv') {
+      const a = document.createElement('a')
+      a.href = '/vance-tindoc-cv.pdf'
+      a.download = 'Vance-Tindoc-CV.pdf'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      showToast('downloading vance-tindoc-cv.pdf')
+    }
     else if (verb === 'hire') {
       jump('contacts')
       showToast('permission granted — inbox unlocked')
@@ -170,6 +182,7 @@ export default function App() {
         <Skills />
         <About />
         <Experience />
+        <Resume />
         {SETTINGS.showAiSection && <AIWorkflow />}
         <Contact />
       </main>

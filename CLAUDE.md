@@ -32,7 +32,7 @@ boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider 
 **`src/data/projects.js`** — the five case studies (card copy + modal copy, metrics, bullets, tags, GitHub links).
 
 **`src/components/`** — one file per piece, rendered in this order inside App:
-`Boot → Background → SocialRail → Navbar (+ MobileMenu) → Hero → Quote → Marquee → Projects → Skills → About → Experience → AIWorkflow → Contact → Footer`, plus overlays `CommandPalette`, `ProjectModal`, and the toast (inline in App). `Icons.jsx` holds shared SVGs + logo mark.
+`Boot → Background → SocialRail → Navbar (+ MobileMenu) → Hero → Quote → Marquee → Projects → Skills → About → Experience → Resume → AIWorkflow → Contact → Footer`, plus overlays `CommandPalette`, `ProjectModal`, and the toast (inline in App). `Icons.jsx` holds shared SVGs + logo mark.
 
 ## Styling
 
@@ -52,6 +52,7 @@ Plain CSS (no Tailwind). Everything lives in `src/index.css` using semantic clas
 | `src/fx.js` | All imperative effects (see above) |
 | `src/data/projects.js` | Project/case-study content |
 | `public/vance.jpg` | Hero profile photo |
+| `public/vance-tindoc-cv.pdf` | CV served by the Resume section + `download cv` palette command (generated placeholder — replace with the real CV) |
 | `public/projects/` | Optional project screenshots: `<slug>.png` or `.jpg` (e.g. `fortiroom.png`); cards fall back to a labelled placeholder when missing |
 | `index.html` | Title, meta/OG tags, Fira Code font link |
 | `public/favicon.svg` | Two-squares logo mark |

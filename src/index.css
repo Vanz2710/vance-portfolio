@@ -349,6 +349,20 @@ a:hover [data-nl-t] { color: #fff !important; }
 .exp-org { font-size: 13px; margin-top: 2px; }
 .exp-desc { font-size: 13.5px; line-height: 1.75; margin-top: 10px; max-width: 640px; color: #ABB2BF; }
 
+/* ---- resume ---- */
+.cv-term {
+  max-width: 720px; background: #23272E;
+  border: 1px solid rgba(171, 178, 191, .35);
+  box-shadow: 10px 10px 0 color-mix(in oklab, var(--ac, #C778DD) 12%, transparent);
+}
+.cv-body { padding: 20px 24px 24px; }
+.cv-cmd { font-size: 13.5px; }
+.cv-file { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+.cv-name { color: #fff; font-weight: 600; font-size: 15px; }
+.cv-meta { font-size: 12px; color: #5C6370; }
+.cv-desc { font-size: 13.5px; line-height: 1.75; color: #ABB2BF; margin-top: 10px; max-width: 560px; }
+.cv-actions { display: flex; align-items: center; gap: 22px; margin-top: 24px; flex-wrap: wrap; }
+
 /* ---- ai workflow ---- */
 .ai-intro { font-size: 14px; line-height: 1.8; max-width: 560px; color: #ABB2BF; margin-bottom: 36px; text-wrap: pretty; }
 .ai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; }
