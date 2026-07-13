@@ -765,14 +765,18 @@ textarea.inp { resize: vertical; min-height: 96px; }
   position: fixed; inset: 0; z-index: 900; pointer-events: none;
 }
 .glitch-veil > * { position: absolute; inset: 0; display: block; }
+/* -webkit- first, standard LAST: the CSS minifier dedupes the pair and
+   keeps the final declaration — if the prefixed one wins, Chromium
+   renders no backdrop-filter at all and the invert bands vanish in
+   production builds. Do not reorder. */
 .glitch-veil .gv-a {
-  backdrop-filter: invert(1) hue-rotate(18deg);
   -webkit-backdrop-filter: invert(1) hue-rotate(18deg);
+  backdrop-filter: invert(1) hue-rotate(18deg);
   animation: glitchSliceA .62s steps(1, end) both;
 }
 .glitch-veil .gv-b {
-  backdrop-filter: hue-rotate(140deg) saturate(2.4) contrast(1.15);
   -webkit-backdrop-filter: hue-rotate(140deg) saturate(2.4) contrast(1.15);
+  backdrop-filter: hue-rotate(140deg) saturate(2.4) contrast(1.15);
   animation: glitchSliceB .62s steps(1, end) both;
 }
 .glitch-veil .gv-static {

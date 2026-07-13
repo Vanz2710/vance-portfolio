@@ -70,6 +70,8 @@ Plain CSS (no Tailwind). Everything lives in `src/index.css` using semantic clas
 
 ## Gotchas
 
+- For `-webkit-`-prefixed + standard property pairs (e.g. `backdrop-filter` on the glitch veil), the standard property must come LAST: the production CSS minifier dedupes the pair keeping the final declaration, and a `-webkit-backdrop-filter`-only rule renders nothing in Chromium — dev looks fine while the deployed site silently loses the effect. Verify visual effects against `npm run preview`, not just the dev server.
+
 - The contact form POSTs to FormSubmit's AJAX endpoint (`FORM_ENDPOINT` in `src/components/Contact.jsx`) — no backend or API key. FormSubmit requires a one-time activation: the first submission emails an activation link to the inbox; until it's clicked, submissions aren't delivered.
 - `initPageEffects` measures element positions on mount for reveals/parallax — keep fixed heights on hero photo (440px) and card shots (172px) so measurements don't shift.
 - Special glyphs (▪ ⟫ ↗ → ↵ ✕ ≡) are literal UTF-8 in source; keep files UTF-8 encoded.
