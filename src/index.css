@@ -86,6 +86,13 @@ a:hover [data-nl-t] { color: var(--bright) !important; }
 /* ---- keyframes ---- */
 @keyframes blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes mqJitter {
+  0% { transform: skewX(-9deg) translateY(-2px); }
+  30% { transform: skewX(6deg) translateX(2px); }
+  60% { transform: skewX(-3deg) translateY(1px); }
+  85% { transform: translateX(-1px) skewX(1deg); }
+  100% { transform: none; }
+}
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(.965); } to { opacity: 1; transform: none; } }
@@ -307,15 +314,66 @@ a:hover [data-nl-t] { color: var(--bright) !important; }
 .quote-author-row { display: flex; justify-content: flex-end; }
 .quote-author { border: 1px solid rgba(var(--line), .4); border-top: none; padding: 12px 22px; color: var(--bright); font-size: 15px; }
 
-/* ---- stack marquee ---- */
+/* ---- stack marquee ----
+   Full-bleed two-row ticker: bold row scrolls left, ghost (outlined)
+   row scrolls right. fx.js adds ambient glitch pulses (.is-glitch on
+   [data-mqi]) and a scroll-velocity skew on [data-mq-row]. */
 .marquee {
-  margin-top: 64px; overflow: hidden;
+  position: relative; margin-top: 72px; padding: 26px 0 20px;
+  width: 100vw; margin-left: calc(50% - 50vw);
   border-top: 1px solid rgba(var(--line), .35);
   border-bottom: 1px solid rgba(var(--line), .35);
+  background: rgba(var(--line), .04);
 }
-.marquee-track { display: flex; width: max-content; animation: marquee 30s linear infinite; white-space: nowrap; }
-.marquee-track:hover { animation-play-state: paused; }
-.marquee-seg { display: inline-block; padding: 13px 0; font-size: 14.5px; letter-spacing: .12em; color: var(--fg); }
+.marquee::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(var(--line), .07) 0 1px, transparent 1px 4px);
+  opacity: .45;
+}
+.mq-label {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 2;
+  background: var(--bg); padding: 0 14px; white-space: nowrap;
+  color: var(--dim); font-size: 13px; letter-spacing: .14em; line-height: 1.45;
+}
+.mq-row {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.mq-row--ghost { margin-top: 4px; }
+.mq-track {
+  display: flex; width: max-content; white-space: nowrap;
+  animation: marquee var(--mq-dur, 52s) linear infinite;
+}
+.mq-track--rev { animation-direction: reverse; }
+.mq-row:hover .mq-track { animation-play-state: paused; }
+.mq-seg, .mq-cell { display: inline-flex; align-items: center; }
+.mq-item {
+  display: inline-block; padding: 2px 0;
+  color: var(--bright); font-size: clamp(30px, 4.6vw, 54px);
+  font-weight: 700; letter-spacing: .01em; line-height: 1.3;
+  transition: color .22s ease, text-shadow .22s ease;
+}
+.mq-item:hover,
+.mq-item.is-glitch {
+  color: var(--ac, #C778DD);
+  text-shadow: 3px 0 var(--glitch-a), -3px 0 var(--glitch-b);
+}
+.mq-item.is-glitch { animation: mqJitter .46s steps(1, end) both; }
+.mq-dot { margin: 0 clamp(18px, 2.4vw, 34px); font-size: clamp(12px, 1.4vw, 18px); opacity: .9; }
+.mq-row--ghost .mq-item {
+  color: transparent; font-size: clamp(20px, 3vw, 34px); font-weight: 600;
+  -webkit-text-stroke: 1px rgba(var(--line), .65);
+}
+.mq-row--ghost .mq-item:hover,
+.mq-row--ghost .mq-item.is-glitch {
+  color: var(--ac, #C778DD);
+  -webkit-text-stroke-color: transparent;
+}
+.mq-row--ghost .mq-dot { opacity: .5; }
+@media (prefers-reduced-motion: reduce) {
+  .mq-track { animation: none; }
+}
 
 /* ---- sections ---- */
 .sec { padding: 110px 0 20px; scroll-margin-top: 70px; }
@@ -678,6 +736,40 @@ textarea.inp { resize: vertical; min-height: 96px; }
   84% { opacity: .4; }
   100% { opacity: 0; }
 }
+/* mini veil for auto-tour section hops — band sweeps, no full flash */
+.glitch-veil--mini .gv-a { animation: glitchSliceMini .3s steps(1, end) both; }
+.glitch-veil--mini .gv-static { animation-duration: .3s; }
+@keyframes glitchSliceMini {
+  0% { clip-path: inset(8% 0 80% 0); }
+  25% { clip-path: inset(62% 0 24% 0); }
+  50% { clip-path: inset(30% 0 58% 0); }
+  75% { clip-path: inset(78% 0 10% 0); }
+  100% { clip-path: inset(50% 0 50% 0); }
+}
+
+/* ---- auto-tour HUD (built by runTour in fx.js) ---- */
+.tour-hud {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 650;
+  display: flex; align-items: center; gap: 12px; white-space: nowrap;
+  background: var(--menu-bg); border: 1px solid rgba(var(--line), .45);
+  box-shadow: var(--nav-shadow); padding: 10px 16px;
+  font-size: 13px; color: var(--fg); animation: riseIn .3s ease;
+}
+.tour-hud .tour-run { font-size: 10px; }
+.tour-hud .tour-path { color: var(--bright); font-weight: 600; }
+.tour-hud .tour-idx { color: var(--dim); }
+.tour-hud .tour-exit {
+  color: var(--dim); font-size: 11.5px;
+  border-left: 1px solid rgba(var(--line), .3); padding-left: 12px;
+}
+@media (max-width: 560px) {
+  .tour-hud .tour-exit { display: none; }
+}
+.tour-btn--on {
+  color: var(--ac, #C778DD); border-color: var(--ac, #C778DD);
+  animation: pulseSq 1.8s infinite;
+}
+
 @keyframes glitchJitter {
   0% { transform: translateX(0); }
   10% { transform: translateX(-7px) skewX(-1.2deg); }

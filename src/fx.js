@@ -10,6 +10,7 @@
  *   data-scr              heading scramble-in
  *   data-cnt / -dec       animated counters
  *   data-typed            hero typing loop
+ *   data-mqi / data-mq-row  marquee glitch pulses + scroll-velocity skew
  *   data-prog / data-nav / data-top   scroll progress, nav shrink, back-to-top
  *   data-grid / data-bgp / data-bgr / data-plx   background + section parallax
  *   data-spot / data-cur-dot          cursor spotlight + custom cursor
@@ -58,9 +59,10 @@ export function themeGlitch(apply) {
   ;(document.querySelector('.site') || document.body).appendChild(veil)
   document.documentElement.classList.add('is-glitching')
   const vh = window.innerHeight
-  document.querySelectorAll('[data-scr], [data-gl]').forEach((el) => {
+  const vw = window.innerWidth
+  document.querySelectorAll('[data-scr], [data-gl], [data-mqi]').forEach((el) => {
     const r = el.getBoundingClientRect()
-    if (r.bottom < 0 || r.top > vh) return
+    if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return
     scrambleEl(el, 14, 28)
   })
   setTimeout(apply, 230)
@@ -69,6 +71,123 @@ export function themeGlitch(apply) {
     veil.remove()
     glitchBusy = false
   }, 640)
+}
+
+/* Auto-tour: glitch-hops through every section in page order with a
+   terminal HUD readout ("cd ~/projects [2/8]"). Each hop: the HUD path
+   scrambles in, the page glides on an eased scroll, then a mini glitch
+   veil + heading re-scramble fire on arrival. Any real user input
+   (wheel / touch / pointer / key) exits the tour — except on the
+   [data-tour-toggle] button, so its own click can stop it cleanly.
+   Returns a stop(); onDone(completed) fires exactly once. */
+export function runTour({ onDone } = {}) {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const stops = Array.from(document.querySelectorAll('section[id]'))
+  if (!stops.length) {
+    onDone?.(false)
+    return () => {}
+  }
+
+  let done = false
+  let raf = null
+  const timers = []
+
+  const hud = document.createElement('div')
+  hud.className = 'tour-hud'
+  hud.setAttribute('role', 'status')
+  hud.innerHTML =
+    '<span class="tour-run acc">▶</span><b class="tour-path"></b>' +
+    '<span class="tour-idx"></span><span class="tour-exit">scroll or esc to exit</span>'
+  ;(document.querySelector('.site') || document.body).appendChild(hud)
+  const pathEl = hud.querySelector('.tour-path')
+  const idxEl = hud.querySelector('.tour-idx')
+
+  const INPUTS = ['wheel', 'touchstart', 'pointerdown', 'keydown']
+  const onInput = (e) => {
+    if (e.target && e.target.closest && e.target.closest('[data-tour-toggle]')) return
+    stop(false)
+  }
+  INPUTS.forEach((t) => window.addEventListener(t, onInput, { passive: true }))
+
+  const stop = (completed) => {
+    if (done) return
+    done = true
+    if (raf) cancelAnimationFrame(raf)
+    timers.forEach(clearTimeout)
+    INPUTS.forEach((t) => window.removeEventListener(t, onInput))
+    document.documentElement.classList.remove('is-glitching')
+    hud.remove()
+    onDone?.(completed)
+  }
+
+  const glide = (toY, dur, cb) => {
+    const from = window.scrollY
+    const dist = toY - from
+    if (reduce || dur <= 0 || Math.abs(dist) < 2) {
+      window.scrollTo({ top: toY, behavior: 'instant' })
+      cb()
+      return
+    }
+    const t0 = performance.now()
+    const tick = (now) => {
+      if (done) return
+      const t = Math.min(1, (now - t0) / dur)
+      const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+      window.scrollTo({ top: from + dist * e, behavior: 'instant' })
+      if (t < 1) raf = requestAnimationFrame(tick)
+      else { raf = null; cb() }
+    }
+    raf = requestAnimationFrame(tick)
+  }
+
+  const microGlitch = () => {
+    if (reduce) return
+    const veil = document.createElement('div')
+    veil.className = 'glitch-veil glitch-veil--mini'
+    veil.setAttribute('aria-hidden', 'true')
+    veil.innerHTML = '<i class="gv-a"></i><b class="gv-static"></b>'
+    ;(document.querySelector('.site') || document.body).appendChild(veil)
+    document.documentElement.classList.add('is-glitching')
+    timers.push(setTimeout(() => {
+      document.documentElement.classList.remove('is-glitching')
+      veil.remove()
+    }, 300))
+  }
+
+  let i = 0
+  const next = () => {
+    if (done) return
+    if (i >= stops.length) {
+      stop(true)
+      return
+    }
+    const sec = stops[i]
+    idxEl.textContent = '[' + (i + 1) + '/' + stops.length + ']'
+    pathEl.textContent = 'cd ~/' + sec.id
+    pathEl.__orig = null // label changes every stop — drop the scramble cache
+    if (!reduce) scrambleEl(pathEl, 10, 22)
+    timers.push(setTimeout(() => {
+      if (done) return
+      const y = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - 76)
+      const dur = Math.min(1500, Math.max(700, Math.abs(y - window.scrollY) * 0.55))
+      glide(y, dur, () => {
+        microGlitch()
+        if (!reduce) {
+          const vh = window.innerHeight
+          const vw = window.innerWidth
+          sec.querySelectorAll('[data-scr], [data-gl]').forEach((el) => {
+            const r = el.getBoundingClientRect()
+            if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return
+            scrambleEl(el, 12, 26)
+          })
+        }
+        i++
+        timers.push(setTimeout(next, 2100))
+      })
+    }, 420))
+  }
+  next()
+  return () => stop(false)
 }
 
 export function initPageEffects({ cursorFx = true } = {}) {
@@ -226,6 +345,27 @@ export function initPageEffects({ cursorFx = true } = {}) {
   document.querySelectorAll('[data-scr]').forEach((el) => scrObs.observe(el))
   cleanups.push(() => { scrObs.disconnect(); scrIntervals.forEach(clearInterval) })
 
+  /* ---- marquee ambient glitch pulses ---- */
+  const mqItems = Array.from(document.querySelectorAll('[data-mqi]'))
+  if (mqItems.length && !reduce) {
+    const mqTimers = []
+    const pulse = () => {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const vis = mqItems.filter((el) => {
+        const r = el.getBoundingClientRect()
+        return r.top < vh && r.bottom > 0 && r.left < vw && r.right > 0
+      })
+      if (!vis.length) return
+      const el = vis[Math.floor(Math.random() * vis.length)]
+      el.classList.add('is-glitch')
+      scrambleEl(el, 8, 30)
+      mqTimers.push(setTimeout(() => el.classList.remove('is-glitch'), 480))
+    }
+    const mqIv = setInterval(pulse, 1400)
+    cleanups.push(() => { clearInterval(mqIv); mqTimers.forEach(clearTimeout) })
+  }
+
   /* ---- animated counters ---- */
   const cntObs = new IntersectionObserver((entries) => {
     entries.forEach((en) => {
@@ -288,6 +428,17 @@ export function initPageEffects({ cursorFx = true } = {}) {
     const r = el.getBoundingClientRect()
     el.__base = r.top + window.scrollY + r.height / 2
   })
+  /* marquee rows lean with scroll velocity, then ease back upright */
+  const mqRows = Array.from(document.querySelectorAll('[data-mq-row]'))
+  let mqVel = 0
+  let mqLast = window.scrollY
+  let mqRaf = null
+  const mqSettle = () => {
+    mqVel *= 0.86
+    if (Math.abs(mqVel) < 0.05) mqVel = 0
+    mqRows.forEach((row) => { row.style.transform = mqVel ? 'skewX(' + (-mqVel).toFixed(2) + 'deg)' : 'none' })
+    mqRaf = mqVel ? requestAnimationFrame(mqSettle) : null
+  }
   let ticking = false
   const onScroll = () => {
     if (ticking) return
@@ -321,12 +472,20 @@ export function initPageEffects({ cursorFx = true } = {}) {
           const mid = el.__base - sc - vh / 2
           el.style.translate = '0 ' + (-mid * s).toFixed(1) + 'px'
         })
+        if (mqRows.length) {
+          mqVel = Math.max(-9, Math.min(9, mqVel + (sc - mqLast) * 0.045))
+          mqLast = sc
+          if (!mqRaf) mqRaf = requestAnimationFrame(mqSettle)
+        }
       }
     })
   }
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
-  cleanups.push(() => window.removeEventListener('scroll', onScroll))
+  cleanups.push(() => {
+    window.removeEventListener('scroll', onScroll)
+    if (mqRaf) cancelAnimationFrame(mqRaf)
+  })
 
   /* ---- active nav link ---- */
   const navObs = new IntersectionObserver((entries) => {

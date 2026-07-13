@@ -21,16 +21,18 @@ Single-page React app with no router — all sections are in one scrollable page
 
 **Entry point:** `index.html` → `src/main.jsx` → `src/App.jsx`
 
-**`src/App.jsx`** is the shell. It owns all cross-cutting UI state (mobile menu, case-study modal, "view all" projects, command palette + its filtered command list, toast, accent-color override, dark/light theme) plus:
+**`src/App.jsx`** is the shell. It owns all cross-cutting UI state (mobile menu, case-study modal, "view all" projects, command palette + its filtered command list, toast, accent-color override, dark/light theme, auto-tour) plus:
 - `SETTINGS` at the top — accent name default, theme default, `cursorFx` toggle, `showAiSection` toggle
 - theme state: persisted to `localStorage['vt-theme']`, reflected as `data-theme` on `<html>` (an inline script in `index.html` applies it pre-paint to avoid a flash), and switched through `themeGlitch()` from fx.js; `ACCENTS[name][theme]` picks the accent hex per theme (One Dark accents on dark, One Light on light)
 - body scroll-lock while any overlay is open
 - global keyboard shortcuts: `Ctrl/Cmd+K` and `/` open the command palette, `Escape` closes palette → modal → menu
 
 **`src/fx.js`** — all imperative page effects, initialized once from App via `useEffect` and driven by data-attributes (returns a cleanup function; StrictMode-safe):
-boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider draw-in (`data-line`), card tilt (`data-hov`), magnetic buttons (`data-mag`), scroll reveals (`data-rv`/`data-rvd`), heading scramble (`data-scr`), counters (`data-cnt`), typing loop (`data-typed`), scroll progress/nav shrink/back-to-top (`data-prog`/`data-nav`/`data-top`), background + section parallax (`data-grid`/`data-bgp`/`data-bgr`/`data-plx`), custom cursor + spotlight (`data-cur-dot`/`data-spot`), active nav-link tracking (`data-nl-t`). All effects respect `prefers-reduced-motion`.
+boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider draw-in (`data-line`), card tilt (`data-hov`), magnetic buttons (`data-mag`), scroll reveals (`data-rv`/`data-rvd`), heading scramble (`data-scr`), counters (`data-cnt`), typing loop (`data-typed`), marquee ambient glitch pulses + scroll-velocity skew (`data-mqi`/`data-mq-row`), scroll progress/nav shrink/back-to-top (`data-prog`/`data-nav`/`data-top`), background + section parallax (`data-grid`/`data-bgp`/`data-bgr`/`data-plx`), custom cursor + spotlight (`data-cur-dot`/`data-spot`), active nav-link tracking (`data-nl-t`). All effects respect `prefers-reduced-motion`.
 
-fx.js also exports `themeGlitch(apply)` — the dark/light transition: it appends a `.glitch-veil` (two `backdrop-filter` slice bands + scanline/noise static), adds `.is-glitching` to `<html>` (jitters `.main`/`.nav`/`.footer`), re-scrambles the headings currently in view, runs `apply()` (the actual theme flip) at 230ms under the full-screen invert flash, and cleans up at 640ms. Guarded against re-entry; falls back to an instant flip under reduced motion.
+fx.js also exports `runTour({ onDone })` — the auto-tour behind the navbar ▶ button and the palette's `run tour` command: glitch-hops through every `section[id]` in DOM order (HUD path scramble → eased rAF scroll → `.glitch-veil--mini` + heading re-scramble on arrival, ~2.1s dwell) with a fixed `cd ~/<id>` HUD; any real user input (wheel/touch/pointer/key) exits it, except on `[data-tour-toggle]` so the navbar button's own click can stop it. Returns a stop(); `onDone(completed)` fires exactly once. App tracks it in `tourRef`/`touring` and closes the mobile menu + modal before starting (their body scroll-lock would freeze the glide).
+
+fx.js also exports `themeGlitch(apply)` — the dark/light transition: it appends a `.glitch-veil` (two `backdrop-filter` slice bands + scanline/noise static), adds `.is-glitching` to `<html>` (jitters `.main`/`.nav`/`.footer`), re-scrambles the headings and marquee items currently in view, runs `apply()` (the actual theme flip) at 230ms under the full-screen invert flash, and cleans up at 640ms. Guarded against re-entry; falls back to an instant flip under reduced motion.
 
 **`src/data/projects.js`** — the five case studies (card copy + modal copy, metrics, bullets, tags, GitHub links).
 

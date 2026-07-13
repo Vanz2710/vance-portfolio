@@ -40,6 +40,22 @@ export function MoonIcon({ size = 15 }) {
   )
 }
 
+export function PlayIcon({ size = 13 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M6 3.8v16.4c0 .9 1 1.5 1.8 1L20.6 13c.8-.5.8-1.6 0-2.1L7.8 2.8C7 2.3 6 2.9 6 3.8z" />
+    </svg>
+  )
+}
+
+export function StopIcon({ size = 11 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="4.5" y="4.5" width="15" height="15" rx="1.5" />
+    </svg>
+  )
+}
+
 export function LogoMark() {
   return (
     <span className="logo-mark">

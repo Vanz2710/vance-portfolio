@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PROJECTS } from './data/projects'
-import { initPageEffects, themeGlitch } from './fx'
+import { initPageEffects, runTour, themeGlitch } from './fx'
 import Boot from './components/Boot'
 import Background from './components/Background'
 import SocialRail from './components/SocialRail'
@@ -60,6 +60,7 @@ const COMMANDS = [
   { cmd: 'open linkedin', desc: 'linkedin.com/in/vancetindoc ↗', action: ['open', 'https://linkedin.com/in/vancetindoc/'] },
   { cmd: 'mail vance', desc: 'compose an email', action: ['mail', 'mailto:vancetindoc@gmail.com'] },
   { cmd: 'download cv', desc: 'save vance-tindoc-cv.pdf', action: ['cv'] },
+  { cmd: 'run tour', desc: 'auto-tour every section ▶', action: ['tour'] },
   { cmd: 'accent purple', desc: 'theme accent → purple', action: ['accent', 'purple'] },
   { cmd: 'accent blue', desc: 'theme accent → blue', action: ['accent', 'blue'] },
   { cmd: 'accent green', desc: 'theme accent → green', action: ['accent', 'green'] },
@@ -86,7 +87,9 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [accentName, setAccentName] = useState(SETTINGS.accent)
   const [theme, setTheme] = useState(initialTheme)
+  const [touring, setTouring] = useState(false)
   const toastTimer = useRef(null)
+  const tourRef = useRef(null)
 
   const accent = (ACCENTS[accentName] ?? ACCENTS.purple)[theme]
 
@@ -98,6 +101,25 @@ export default function App() {
     themeGlitch(() => {
       setTheme(target)
       try { localStorage.setItem('vt-theme', target) } catch { /* storage unavailable */ }
+    })
+  }
+
+  /* auto-tour: overlays are closed first so the body scroll-lock lifts
+     before runTour starts gliding; runTour cancels itself on user input */
+  const toggleTour = () => {
+    if (tourRef.current) {
+      tourRef.current()
+      return
+    }
+    setMenuOpen(false)
+    setModalId(null)
+    setTouring(true)
+    tourRef.current = runTour({
+      onDone: (completed) => {
+        tourRef.current = null
+        setTouring(false)
+        showToast(completed ? 'tour complete — sudo hire-me' : 'tour exited')
+      },
     })
   }
 
@@ -126,7 +148,8 @@ export default function App() {
     } else if (verb === 'theme') {
       if (arg === theme) showToast('already in ' + arg + ' mode')
       else switchTheme(arg)
-    } else if (verb === 'toast') showToast(arg)
+    } else if (verb === 'tour') toggleTour()
+    else if (verb === 'toast') showToast(arg)
     else if (verb === 'cv') {
       const a = document.createElement('a')
       a.href = '/vance-tindoc-cv.pdf'
@@ -147,6 +170,9 @@ export default function App() {
 
   /* one-time imperative page effects (boot, reveals, cursor, parallax, ...) */
   useEffect(() => initPageEffects({ cursorFx: SETTINGS.cursorFx }), [])
+
+  /* stop a running tour if the app unmounts (StrictMode remount, HMR) */
+  useEffect(() => () => { tourRef.current?.() }, [])
 
   /* reflect theme on <html> (index.html pre-paint script sets the initial value) */
   useEffect(() => {
@@ -206,9 +232,11 @@ export default function App() {
       <Navbar
         menuOpen={menuOpen}
         theme={theme}
+        touring={touring}
         onToggleMenu={() => setMenuOpen((v) => !v)}
         onOpenPalette={openPalette}
         onToggleTheme={() => switchTheme()}
+        onToggleTour={toggleTour}
       />
       {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
 

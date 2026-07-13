@@ -1,8 +1,8 @@
-import { LogoMark, MoonIcon, SunIcon } from './Icons'
+import { LogoMark, MoonIcon, PlayIcon, StopIcon, SunIcon } from './Icons'
 
 const LINKS = ['home', 'projects', 'skills', 'about-me', 'experience', 'contacts']
 
-export default function Navbar({ menuOpen, theme, onToggleMenu, onOpenPalette, onToggleTheme }) {
+export default function Navbar({ menuOpen, theme, touring, onToggleMenu, onOpenPalette, onToggleTheme, onToggleTour }) {
   const nextTheme = theme === 'dark' ? 'light' : 'dark'
   return (
     <nav className={`nav${menuOpen ? ' nav--raised' : ''}`} data-nav="" aria-label="Main">
@@ -24,6 +24,16 @@ export default function Navbar({ menuOpen, theme, onToggleMenu, onOpenPalette, o
             <span className="acc">&gt;_</span> ctrl+k
           </button>
         </div>
+        <button
+          className={`theme-btn tour-btn${touring ? ' tour-btn--on' : ''}`}
+          data-tour-toggle=""
+          onClick={onToggleTour}
+          title={touring ? 'Stop the tour' : 'Auto-tour the site'}
+          aria-label={touring ? 'Stop the auto-tour' : 'Start the auto-tour'}
+          aria-pressed={touring}
+        >
+          {touring ? <StopIcon /> : <PlayIcon />}
+        </button>
         <button
           className="theme-btn"
           onClick={onToggleTheme}
