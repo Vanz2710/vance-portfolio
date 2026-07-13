@@ -62,8 +62,14 @@ export function themeGlitch(apply) {
   veil.innerHTML = '<i class="gv-a"></i><i class="gv-b"></i><b class="gv-static"></b>'
   ;(document.querySelector('.site') || document.body).appendChild(veil)
   document.documentElement.classList.add('is-glitching')
-  crackle(0.55)
-  scrambleVisible(14, 28)
+  /* original transition: only headings + hero keywords scramble — the
+     marquee stays put and no SFX here (meltdown owns the heavy version) */
+  const vh = window.innerHeight
+  document.querySelectorAll('[data-scr], [data-gl]').forEach((el) => {
+    const r = el.getBoundingClientRect()
+    if (r.bottom < 0 || r.top > vh) return
+    scrambleEl(el, 14, 28)
+  })
   setTimeout(apply, 230)
   setTimeout(() => {
     document.documentElement.classList.remove('is-glitching')
