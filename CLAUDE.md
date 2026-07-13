@@ -28,16 +28,20 @@ Single-page React app with no router — all sections are in one scrollable page
 - global keyboard shortcuts: `Ctrl/Cmd+K` and `/` open the command palette, `Escape` closes palette → modal → menu
 
 **`src/fx.js`** — all imperative page effects, initialized once from App via `useEffect` and driven by data-attributes (returns a cleanup function; StrictMode-safe):
-boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider draw-in (`data-line`), card tilt (`data-hov`), magnetic buttons (`data-mag`), scroll reveals (`data-rv`/`data-rvd`), heading scramble (`data-scr`), counters (`data-cnt`), typing loop (`data-typed`), marquee ambient glitch pulses + scroll-velocity skew (`data-mqi`/`data-mq-row`), scroll progress/nav shrink/back-to-top (`data-prog`/`data-nav`/`data-top`), background + section parallax (`data-grid`/`data-bgp`/`data-bgr`/`data-plx`), custom cursor + spotlight (`data-cur-dot`/`data-spot`), active nav-link tracking (`data-nl-t`). All effects respect `prefers-reduced-motion`.
+boot overlay timeline + typed login (`data-boot`/`data-bl`/`data-bt`), hero glitch (`data-gl`), divider draw-in (`data-line`), card tilt (`data-hov`), magnetic buttons (`data-mag`), scroll reveals (`data-rv`/`data-rvd`), heading scramble (`data-scr`), counters (`data-cnt`), typing loop (`data-typed`), marquee ambient glitch pulses + scroll-velocity skew (`data-mqi`/`data-mq-row`), scroll progress/nav shrink/back-to-top (`data-prog`/`data-nav`/`data-top`), background + section parallax (`data-grid`/`data-bgp`/`data-bgr`/`data-plx`), custom cursor + spotlight + velocity RGB trail (`data-cur-dot`/`data-spot`), active nav-link tracking + hover scramble (`data-nl-t`), throwable chips with bounce/spring physics (`data-chip`/`data-chip-zone`, desktop pointers only), section-aware background glyph swaps (`data-glyph`, driven by the same observer as nav tracking). All effects respect `prefers-reduced-motion`.
 
 fx.js also exports `runTour({ onDone })` — the auto-tour behind the navbar ▶ button and the palette's `run tour` command: glitch-hops through every `section[id]` in DOM order (HUD path scramble → eased rAF scroll → `.glitch-veil--mini` + heading re-scramble on arrival, ~2.1s dwell) with a fixed `cd ~/<id>` HUD; any real user input (wheel/touch/pointer/key) exits it, except on `[data-tour-toggle]` so the navbar button's own click can stop it. Returns a stop(); `onDone(completed)` fires exactly once. App tracks it in `tourRef`/`touring` and closes the mobile menu + modal before starting (their body scroll-lock would freeze the glide).
+
+fx.js also exports `meltdown(apply)` — the Konami-code (↑↑↓↓←→←→BA, handled in App, ignored while typing in inputs) "system meltdown": the themeGlitch storm run twice (`.glitch-veil--melt` + `.is-melting`, ~1.24s) with `apply` swapping the accent to the secret `crimson` entry in `ACCENTS` (absent from palette/terminal accent commands on purpose); running the code again reverts.
+
+**`src/sound.js`** — synthesized WebAudio SFX, no assets: `tick()` (boot/terminal keys, tour hops), `crackle()` (theme glitch, meltdown), `humStart()/stopHum()` (tour drone), `setSound(on)`. Off by default; every entry point no-ops while disabled so callers never guard. Toggled by the navbar speaker button / `sound on|off` palette commands, persisted to `localStorage['vt-sound']`.
 
 fx.js also exports `themeGlitch(apply)` — the dark/light transition: it appends a `.glitch-veil` (two `backdrop-filter` slice bands + scanline/noise static), adds `.is-glitching` to `<html>` (jitters `.main`/`.nav`/`.footer`), re-scrambles the headings and marquee items currently in view, runs `apply()` (the actual theme flip) at 230ms under the full-screen invert flash, and cleans up at 640ms. Guarded against re-entry; falls back to an instant flip under reduced motion.
 
 **`src/data/projects.js`** — the five case studies (card copy + modal copy, metrics, bullets, tags, GitHub links).
 
 **`src/components/`** — one file per piece, rendered in this order inside App:
-`Boot → Background → SocialRail → Navbar (+ MobileMenu) → Hero → Quote → Marquee → Projects → Skills → About → Experience → Resume → AIWorkflow → Contact → Footer`, plus overlays `CommandPalette`, `ProjectModal`, and the toast (inline in App). `Icons.jsx` holds shared SVGs + logo mark.
+`Boot → Background → SocialRail → Navbar (+ MobileMenu) → Hero → Quote → Marquee → Projects → Skills → About → Experience → Resume → AIWorkflow → Terminal → Contact → Footer (+ SysMon)`, plus overlays `CommandPalette`, `ProjectModal`, and the toast (inline in App). `Icons.jsx` holds shared SVGs + logo mark. `Terminal.jsx` is an interactive shell (section `#terminal`, so the auto-tour and `cd terminal` pick it up automatically) — its commands dispatch through App's `execAction`, the same `[verb, arg]` dispatcher the palette's `runCmd` wraps. `SysMon.jsx` is the footer's live client readout (fps/session only tick while on screen via IntersectionObserver).
 
 ## Styling
 
@@ -56,6 +60,7 @@ Plain CSS (no Tailwind). Everything lives in `src/index.css` using semantic clas
 |---|---|
 | `src/index.css` | All CSS — reset, keyframes, component classes, responsive breakpoints |
 | `src/fx.js` | All imperative effects (see above) |
+| `src/sound.js` | Opt-in synthesized UI SFX (see above) |
 | `src/data/projects.js` | Project/case-study content |
 | `public/vance.jpg` | Hero profile photo |
 | `public/vance-tindoc-cv.pdf` | CV served by the Resume section + `download cv` palette command (generated placeholder — replace with the real CV) |

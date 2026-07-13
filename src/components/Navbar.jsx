@@ -1,8 +1,8 @@
-import { LogoMark, MoonIcon, PlayIcon, StopIcon, SunIcon } from './Icons'
+import { LogoMark, MoonIcon, MuteIcon, PlayIcon, SpeakerIcon, StopIcon, SunIcon } from './Icons'
 
 const LINKS = ['home', 'projects', 'skills', 'about-me', 'experience', 'contacts']
 
-export default function Navbar({ menuOpen, theme, touring, onToggleMenu, onOpenPalette, onToggleTheme, onToggleTour }) {
+export default function Navbar({ menuOpen, theme, touring, sound, onToggleMenu, onOpenPalette, onToggleTheme, onToggleTour, onToggleSound }) {
   const nextTheme = theme === 'dark' ? 'light' : 'dark'
   return (
     <nav className={`nav${menuOpen ? ' nav--raised' : ''}`} data-nav="" aria-label="Main">
@@ -41,6 +41,15 @@ export default function Navbar({ menuOpen, theme, touring, onToggleMenu, onOpenP
           aria-label={`Switch to ${nextTheme} mode`}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+        </button>
+        <button
+          className="theme-btn"
+          onClick={onToggleSound}
+          title={sound ? 'Mute UI sounds' : 'Enable UI sounds'}
+          aria-label={sound ? 'Mute UI sounds' : 'Enable UI sounds'}
+          aria-pressed={sound}
+        >
+          {sound ? <SpeakerIcon /> : <MuteIcon />}
         </button>
         <button className="burger" onClick={onToggleMenu} aria-label="Toggle menu">
           {menuOpen ? '✕' : '≡'}

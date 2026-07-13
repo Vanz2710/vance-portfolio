@@ -13,7 +13,14 @@ export default function Boot() {
           <span className="acc">&gt;</span> rendering ui ........... <span className="ok">ok</span>
         </div>
         <div data-bl="">
-          <span className="acc">&gt;</span> <span className="white">welcome.</span> <span className="boot-caret" />
+          <span className="acc">&gt;</span> login: <span className="white" data-bt="vance" />
+        </div>
+        <div data-bl="">
+          <span className="acc">&gt;</span> password: <span data-bt="********" />
+        </div>
+        <div data-bl="">
+          <span className="acc">&gt;</span> <span className="ok">access granted ✓</span>{' '}
+          <span className="white">welcome.</span> <span className="boot-caret" />
         </div>
       </div>
     </div>

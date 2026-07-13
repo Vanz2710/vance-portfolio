@@ -1,5 +1,3 @@
-const NBSP = ' '
-
 const GROUPS = [
   {
     title: 'Frontend',
@@ -45,7 +43,11 @@ export default function Skills() {
           {GROUPS.map((g) => (
             <div key={g.title} className="skill-box" data-rv="up" data-rvd={g.delay ?? undefined}>
               <div className="skill-box-title">{g.title}</div>
-              <div className="skill-box-body">{g.items.join(NBSP + ' ')}</div>
+              <div className="skill-box-body" data-chip-zone="">
+                {g.items.map((it) => (
+                  <span key={it} className="sk-item" data-chip="">{it}</span>
+                ))}
+              </div>
             </div>
           ))}
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PROJECTS } from './data/projects'
-import { initPageEffects, runTour, themeGlitch } from './fx'
+import { initPageEffects, meltdown, runTour, themeGlitch } from './fx'
+import { setSound, tick } from './sound'
 import Boot from './components/Boot'
 import Background from './components/Background'
 import SocialRail from './components/SocialRail'
@@ -15,6 +16,7 @@ import About from './components/About'
 import Experience from './components/Experience'
 import Resume from './components/Resume'
 import AIWorkflow from './components/AIWorkflow'
+import Terminal from './components/Terminal'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
 import CommandPalette from './components/CommandPalette'
@@ -30,12 +32,17 @@ const SETTINGS = {
 
 // Accent hex per theme: One Dark values on dark, One Light on light
 // (the dark accents don't have enough contrast on a white background).
+// `crimson` is deliberately absent from the palette/terminal accent
+// commands — it only unlocks via the Konami code.
 const ACCENTS = {
   purple: { dark: '#C778DD', light: '#A626A4' },
   blue: { dark: '#61AFEF', light: '#4078F2' },
   green: { dark: '#98C379', light: '#50A14F' },
   yellow: { dark: '#E5C07B', light: '#C18401' },
+  crimson: { dark: '#E06C75', light: '#E45649' },
 }
+
+const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
 
 const THEME_BG = { dark: '#282C33', light: '#FAFAFA' }
 
@@ -47,6 +54,14 @@ function initialTheme() {
   return SETTINGS.theme
 }
 
+function initialSound() {
+  try {
+    return localStorage.getItem('vt-sound') === '1'
+  } catch {
+    return false
+  }
+}
+
 // Command palette entries: [verb, arg] pairs dispatched in runCmd.
 const COMMANDS = [
   { cmd: 'cd home', desc: 'jump to top', action: ['jump', 'home'] },
@@ -55,6 +70,7 @@ const COMMANDS = [
   { cmd: 'cd about-me', desc: 'jump to about', action: ['jump', 'about-me'] },
   { cmd: 'cd experience', desc: 'jump to experience', action: ['jump', 'experience'] },
   { cmd: 'cd resume', desc: 'jump to resume', action: ['jump', 'resume'] },
+  { cmd: 'cd terminal', desc: 'jump to the terminal', action: ['jump', 'terminal'] },
   { cmd: 'cd contacts', desc: 'jump to contacts', action: ['jump', 'contacts'] },
   { cmd: 'open github', desc: 'github.com/Vanz2710 ↗', action: ['open', 'https://github.com/Vanz2710'] },
   { cmd: 'open linkedin', desc: 'linkedin.com/in/vancetindoc ↗', action: ['open', 'https://linkedin.com/in/vancetindoc/'] },
@@ -67,6 +83,8 @@ const COMMANDS = [
   { cmd: 'accent yellow', desc: 'theme accent → yellow', action: ['accent', 'yellow'] },
   { cmd: 'theme light', desc: 'glitch into light mode', action: ['theme', 'light'] },
   { cmd: 'theme dark', desc: 'glitch into dark mode', action: ['theme', 'dark'] },
+  { cmd: 'sound on', desc: 'enable UI sound effects', action: ['sound', 'on'] },
+  { cmd: 'sound off', desc: 'mute UI sound effects', action: ['sound', 'off'] },
   { cmd: 'whoami', desc: 'print identity', action: ['toast', 'vance tindoc — full-stack developer · kuala lumpur'] },
   { cmd: 'sudo hire-me', desc: 'run with elevated privileges', action: ['hire'] },
 ]
@@ -88,8 +106,10 @@ export default function App() {
   const [accentName, setAccentName] = useState(SETTINGS.accent)
   const [theme, setTheme] = useState(initialTheme)
   const [touring, setTouring] = useState(false)
+  const [soundOn, setSoundOn] = useState(initialSound)
   const toastTimer = useRef(null)
   const tourRef = useRef(null)
+  const konamiIdx = useRef(0)
 
   const accent = (ACCENTS[accentName] ?? ACCENTS.purple)[theme]
 
@@ -136,9 +156,18 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(''), 2800)
   }
 
-  const runCmd = (c) => {
-    closePalette()
-    const [verb, arg] = c.action
+  const toggleSound = (to) => {
+    const next = typeof to === 'boolean' ? to : !soundOn
+    setSoundOn(next)
+    setSound(next)
+    if (next) tick()
+    try { localStorage.setItem('vt-sound', next ? '1' : '0') } catch { /* storage unavailable */ }
+    showToast(next ? 'sound on' : 'sound off')
+  }
+
+  /* single dispatcher behind the palette AND the terminal section */
+  const execAction = (action) => {
+    const [verb, arg] = action
     if (verb === 'jump') jump(arg)
     else if (verb === 'open') window.open(arg, '_blank')
     else if (verb === 'mail') window.location.assign(arg)
@@ -149,6 +178,7 @@ export default function App() {
       if (arg === theme) showToast('already in ' + arg + ' mode')
       else switchTheme(arg)
     } else if (verb === 'tour') toggleTour()
+    else if (verb === 'sound') toggleSound(arg === 'on')
     else if (verb === 'toast') showToast(arg)
     else if (verb === 'cv') {
       const a = document.createElement('a')
@@ -165,6 +195,11 @@ export default function App() {
     }
   }
 
+  const runCmd = (c) => {
+    closePalette()
+    execAction(c.action)
+  }
+
   const q = palQuery.trim().toLowerCase()
   const filteredCmds = q ? COMMANDS.filter((c) => (c.cmd + ' ' + c.desc).toLowerCase().includes(q)) : COMMANDS
 
@@ -173,6 +208,29 @@ export default function App() {
 
   /* stop a running tour if the app unmounts (StrictMode remount, HMR) */
   useEffect(() => () => { tourRef.current?.() }, [])
+
+  /* hand the saved sound preference to the sfx module once on mount */
+  useEffect(() => { setSound(initialSound()) }, [])
+
+  /* Konami code ↑↑↓↓←→←→BA — meltdown into the secret crimson accent
+     (typing inside inputs doesn't count; running it again reverts) */
+  useEffect(() => {
+    const onKey = (e) => {
+      const t = e.target
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key
+      konamiIdx.current = key === KONAMI[konamiIdx.current] ? konamiIdx.current + 1 : key === KONAMI[0] ? 1 : 0
+      if (konamiIdx.current !== KONAMI.length) return
+      konamiIdx.current = 0
+      const next = accentName === 'crimson' ? SETTINGS.accent : 'crimson'
+      meltdown(() => {
+        setAccentName(next)
+        showToast(next === 'crimson' ? 'cheat code accepted — crimson unlocked' : 'crimson disengaged')
+      })
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [accentName])
 
   /* reflect theme on <html> (index.html pre-paint script sets the initial value) */
   useEffect(() => {
@@ -233,10 +291,12 @@ export default function App() {
         menuOpen={menuOpen}
         theme={theme}
         touring={touring}
+        sound={soundOn}
         onToggleMenu={() => setMenuOpen((v) => !v)}
         onOpenPalette={openPalette}
         onToggleTheme={() => switchTheme()}
         onToggleTour={toggleTour}
+        onToggleSound={() => toggleSound()}
       />
       {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
 
@@ -250,6 +310,7 @@ export default function App() {
         <Experience />
         <Resume />
         {SETTINGS.showAiSection && <AIWorkflow />}
+        <Terminal onAction={execAction} />
         <Contact />
       </main>
 

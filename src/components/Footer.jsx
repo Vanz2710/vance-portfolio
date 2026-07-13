@@ -1,4 +1,5 @@
 import { GithubIcon, LinkedinIcon, LogoMark, MailIcon } from './Icons'
+import SysMon from './SysMon'
 
 export default function Footer() {
   return (
@@ -28,6 +29,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
+        <SysMon />
         <div className="footer-copy">© 2026 Vance Tindoc — built with too many terminal tabs open</div>
       </div>
     </footer>

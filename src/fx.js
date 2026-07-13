@@ -1,7 +1,7 @@
 /*
  * Global page effects (DOM-driven, hooked up once from App.jsx).
  * Everything works off data-attributes so components stay declarative:
- *   data-boot / data-bl   boot sequence overlay + lines
+ *   data-boot / data-bl / data-bt   boot sequence overlay, lines, typed spans
  *   data-gl               hero keyword glitch
  *   data-line             section divider draw-in
  *   data-hov              3D card tilt (pointer-fine only)
@@ -14,9 +14,13 @@
  *   data-prog / data-nav / data-top   scroll progress, nav shrink, back-to-top
  *   data-grid / data-bgp / data-bgr / data-plx   background + section parallax
  *   data-spot / data-cur-dot          cursor spotlight + custom cursor
- *   data-nl-t             active nav-link highlighting
+ *   data-nl-t             active nav-link highlighting + hover scramble
+ *   data-chip / data-chip-zone   throwable skill chips (desktop only)
+ *   data-glyph            section-aware background glyph swaps
  * Returns a cleanup function (safe under React StrictMode double-mount).
  */
+
+import { crackle, humStart, stopHum, tick } from './sound'
 
 const SCRAMBLE_CH = '#/<>[]{}=+*_\\'
 
@@ -58,19 +62,51 @@ export function themeGlitch(apply) {
   veil.innerHTML = '<i class="gv-a"></i><i class="gv-b"></i><b class="gv-static"></b>'
   ;(document.querySelector('.site') || document.body).appendChild(veil)
   document.documentElement.classList.add('is-glitching')
-  const vh = window.innerHeight
-  const vw = window.innerWidth
-  document.querySelectorAll('[data-scr], [data-gl], [data-mqi]').forEach((el) => {
-    const r = el.getBoundingClientRect()
-    if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return
-    scrambleEl(el, 14, 28)
-  })
+  crackle(0.55)
+  scrambleVisible(14, 28)
   setTimeout(apply, 230)
   setTimeout(() => {
     document.documentElement.classList.remove('is-glitching')
     veil.remove()
     glitchBusy = false
   }, 640)
+}
+
+/* scramble every heading / hero keyword / marquee item currently on screen */
+function scrambleVisible(total, step) {
+  const vh = window.innerHeight
+  const vw = window.innerWidth
+  document.querySelectorAll('[data-scr], [data-gl], [data-mqi]').forEach((el) => {
+    const r = el.getBoundingClientRect()
+    if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return
+    scrambleEl(el, total, step)
+  })
+}
+
+/* Konami-code "system meltdown" — a heavier, twice-as-long glitch storm
+   than the theme transition. `apply` (the secret accent swap) fires under
+   the mid-point flash. Shares the re-entry guard with themeGlitch. */
+export function meltdown(apply) {
+  if (glitchBusy || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    apply()
+    return
+  }
+  glitchBusy = true
+  const veil = document.createElement('div')
+  veil.className = 'glitch-veil glitch-veil--melt'
+  veil.setAttribute('aria-hidden', 'true')
+  veil.innerHTML = '<i class="gv-a"></i><i class="gv-b"></i><b class="gv-static"></b>'
+  ;(document.querySelector('.site') || document.body).appendChild(veil)
+  document.documentElement.classList.add('is-glitching', 'is-melting')
+  crackle(1.1)
+  scrambleVisible(16, 30)
+  setTimeout(() => scrambleVisible(14, 26), 560)
+  setTimeout(apply, 460)
+  setTimeout(() => {
+    document.documentElement.classList.remove('is-glitching', 'is-melting')
+    veil.remove()
+    glitchBusy = false
+  }, 1240)
 }
 
 /* Auto-tour: glitch-hops through every section in page order with a
@@ -101,6 +137,7 @@ export function runTour({ onDone } = {}) {
   ;(document.querySelector('.site') || document.body).appendChild(hud)
   const pathEl = hud.querySelector('.tour-path')
   const idxEl = hud.querySelector('.tour-idx')
+  humStart()
 
   const INPUTS = ['wheel', 'touchstart', 'pointerdown', 'keydown']
   const onInput = (e) => {
@@ -117,6 +154,7 @@ export function runTour({ onDone } = {}) {
     INPUTS.forEach((t) => window.removeEventListener(t, onInput))
     document.documentElement.classList.remove('is-glitching')
     hud.remove()
+    stopHum()
     onDone?.(completed)
   }
 
@@ -148,6 +186,7 @@ export function runTour({ onDone } = {}) {
     veil.innerHTML = '<i class="gv-a"></i><b class="gv-static"></b>'
     ;(document.querySelector('.site') || document.body).appendChild(veil)
     document.documentElement.classList.add('is-glitching')
+    tick()
     timers.push(setTimeout(() => {
       document.documentElement.classList.remove('is-glitching')
       veil.remove()
@@ -207,8 +246,27 @@ export function initPageEffects({ cursorFx = true } = {}) {
     if (reduce) {
       boot.style.display = 'none'
     } else {
-      lines.forEach((l, i) => timers.push(setTimeout(() => { l.style.opacity = '1' }, 150 + i * 190)))
-      timers.push(setTimeout(done, 150 + lines.length * 190 + 430))
+      /* sequential timeline: plain lines fade in; [data-bt] spans type
+         their value char-by-char (login/password), then the final
+         access-granted line holds a beat before the overlay slides away */
+      let at = 150
+      lines.forEach((l) => {
+        const bt = l.querySelector('[data-bt]')
+        timers.push(setTimeout(() => { l.style.opacity = '1' }, at))
+        if (bt) {
+          const txt = bt.getAttribute('data-bt')
+          at += 90
+          for (let c = 1; c <= txt.length; c++) {
+            const k = c
+            timers.push(setTimeout(() => { bt.textContent = txt.slice(0, k); tick() }, at))
+            at += 34
+          }
+          at += 150
+        } else {
+          at += 190
+        }
+      })
+      timers.push(setTimeout(done, at + 400))
       const skip = () => { timers.forEach(clearTimeout); done() }
       boot.addEventListener('click', skip, { once: true })
       cleanups.push(() => boot.removeEventListener('click', skip))
@@ -264,7 +322,11 @@ export function initPageEffects({ cursorFx = true } = {}) {
   if (window.matchMedia('(hover:hover) and (pointer:fine)').matches && !reduce) {
     let tiltEl = null
     let magEl = null
+    let scrHovEl = null
     const onPOver = (e) => {
+      const nl = e.target.closest ? e.target.closest('[data-nl-t]') : null
+      if (nl && nl !== scrHovEl) scrambleEl(nl, 8, 22)
+      scrHovEl = nl
       const c = e.target.closest ? e.target.closest('[data-hov]') : null
       if (c !== tiltEl) {
         if (tiltEl) {
@@ -301,6 +363,84 @@ export function initPageEffects({ cursorFx = true } = {}) {
     cleanups.push(() => {
       document.removeEventListener('pointerover', onPOver)
       document.removeEventListener('pointermove', onPMove)
+    })
+  }
+
+  /* ---- throwable chips (desktop only): drag, toss, bounce inside the
+     [data-chip-zone] box, then spring back home ---- */
+  if (window.matchMedia('(hover:hover) and (pointer:fine)').matches && !reduce) {
+    const flyRafs = new Set()
+    const onChipDown = (e) => {
+      const chip = e.target.closest ? e.target.closest('[data-chip]') : null
+      if (!chip || e.button !== 0) return
+      e.preventDefault()
+      if (chip.__fly) { cancelAnimationFrame(chip.__fly); chip.__fly = null }
+      const zone = chip.closest('[data-chip-zone]')
+      chip.classList.add('chip-drag')
+      chip.style.transition = 'none'
+      let cx = 0
+      let cy = 0
+      const tr = getComputedStyle(chip).transform
+      if (tr && tr !== 'none') {
+        const m = tr.match(/matrix\(([^)]+)\)/)
+        if (m) {
+          const p = m[1].split(',')
+          cx = parseFloat(p[4])
+          cy = parseFloat(p[5])
+        }
+      }
+      let px = e.clientX
+      let py = e.clientY
+      let vx = 0
+      let vy = 0
+      const onMove = (ev) => {
+        vx = ev.clientX - px
+        vy = ev.clientY - py
+        px = ev.clientX
+        py = ev.clientY
+        cx += vx
+        cy += vy
+        chip.style.transform = 'translate(' + cx + 'px,' + cy + 'px)'
+      }
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove)
+        document.removeEventListener('pointerup', onUp)
+        chip.classList.remove('chip-drag')
+        const rect = chip.getBoundingClientRect()
+        const bx = rect.left - cx // untranslated viewport position
+        const by = rect.top - cy
+        const z = zone ? zone.getBoundingClientRect() : null
+        const fly = () => {
+          vx *= 0.94
+          vy *= 0.94
+          cx += vx
+          cy += vy
+          if (z) {
+            if (bx + cx < z.left) { cx = z.left - bx; vx = Math.abs(vx) * 0.6 }
+            if (bx + cx + rect.width > z.right) { cx = z.right - bx - rect.width; vx = -Math.abs(vx) * 0.6 }
+            if (by + cy < z.top) { cy = z.top - by; vy = Math.abs(vy) * 0.6 }
+            if (by + cy + rect.height > z.bottom) { cy = z.bottom - by - rect.height; vy = -Math.abs(vy) * 0.6 }
+          }
+          chip.style.transform = 'translate(' + cx + 'px,' + cy + 'px)'
+          if (Math.abs(vx) + Math.abs(vy) > 0.4) {
+            chip.__fly = requestAnimationFrame(fly)
+            flyRafs.add(chip.__fly)
+          } else {
+            chip.__fly = null
+            chip.style.transition = 'transform .7s cubic-bezier(.34, 1.56, .64, 1)'
+            chip.style.transform = 'none'
+          }
+        }
+        chip.__fly = requestAnimationFrame(fly)
+        flyRafs.add(chip.__fly)
+      }
+      document.addEventListener('pointermove', onMove)
+      document.addEventListener('pointerup', onUp)
+    }
+    document.addEventListener('pointerdown', onChipDown)
+    cleanups.push(() => {
+      document.removeEventListener('pointerdown', onChipDown)
+      flyRafs.forEach((r) => cancelAnimationFrame(r))
     })
   }
 
@@ -487,7 +627,20 @@ export function initPageEffects({ cursorFx = true } = {}) {
     if (mqRaf) cancelAnimationFrame(mqRaf)
   })
 
-  /* ---- active nav link ---- */
+  /* ---- active nav link + section-aware background glyphs ---- */
+  const GLYPH_SETS = {
+    home: ['{ }', '</>', ';', '=>', '#', '[ ]', '::'],
+    projects: ['( )', 'git', '</>', '=>', '#', '{ }', '::'],
+    skills: ['<>', 'npm', ';;', '{}', '#', '( )', '::'],
+    'about-me': ['?', '&&', '@', '!', '~', '[ ]', '::'],
+    experience: ['$', '>_', '&&', '=>', '#', '[ ]', '::'],
+    resume: ['.pdf', '{ }', '$', '=>', '#', '[ ]', '::'],
+    'ai-workflow': ['λ', 'ai', '=>', ';', '#', '[ ]', '::'],
+    terminal: ['$', '>_', '~', ';', '#', '[ ]', '::'],
+    contacts: ['@', '=>', '..', ';', '#', '[ ]', '::'],
+  }
+  const glyphEls = Array.from(document.querySelectorAll('[data-glyph]'))
+  let glyphSec = 'home'
   const navObs = new IntersectionObserver((entries) => {
     entries.forEach((en) => {
       if (!en.isIntersecting) return
@@ -497,6 +650,17 @@ export function initPageEffects({ cursorFx = true } = {}) {
         sp.style.color = on ? 'var(--bright)' : 'var(--fg)'
         sp.style.fontWeight = on ? '600' : '400'
       })
+      if (!reduce && GLYPH_SETS[id] && id !== glyphSec) {
+        glyphSec = id
+        const pool = GLYPH_SETS[id]
+        glyphEls.forEach((el, gi) => {
+          const next = pool[gi % pool.length]
+          if (el.textContent === next) return
+          el.textContent = next
+          el.__orig = null // new target text — drop the scramble cache
+          scrambleEl(el, 9, 30)
+        })
+      }
     })
   }, { rootMargin: '-40% 0px -55% 0px' })
   document.querySelectorAll('section[id]').forEach((s) => navObs.observe(s))
@@ -506,6 +670,21 @@ export function initPageEffects({ cursorFx = true } = {}) {
   const dot = document.querySelector('[data-cur-dot]')
   if (dot && window.matchMedia('(hover:hover) and (pointer:fine)').matches && !reduce) {
     const spot = document.querySelector('[data-spot]')
+    /* velocity-scaled RGB afterimages trailing the dot */
+    const trailA = document.createElement('i')
+    trailA.className = 'cursor-trail cursor-trail--a'
+    const trailB = document.createElement('i')
+    trailB.className = 'cursor-trail cursor-trail--b'
+    const trailHost = document.querySelector('.site') || document.body
+    trailHost.appendChild(trailA)
+    trailHost.appendChild(trailB)
+    let tax = -100
+    let tay = -100
+    let tbx = -100
+    let tby = -100
+    let pmx = -100
+    let pmy = -100
+    let trailOp = 0
     let mx = -100
     let my = -100
     let seen = false
@@ -528,6 +707,19 @@ export function initPageEffects({ cursorFx = true } = {}) {
         ? '0 0 24px var(--ac,#C778DD), 0 0 8px var(--ac,#C778DD)'
         : '0 0 14px color-mix(in oklab, var(--ac,#C778DD) 75%, transparent)'
       dot.style.transform = 'translate(' + (mx - 5) + 'px,' + (my - 5) + 'px) scale(' + sc.toFixed(3) + ')'
+      const speed = Math.abs(mx - pmx) + Math.abs(my - pmy)
+      pmx = mx
+      pmy = my
+      trailOp += (Math.min(speed / 30, 0.85) - trailOp) * 0.16
+      tax += (mx - tax) * 0.42
+      tay += (my - tay) * 0.42
+      tbx += (mx - tbx) * 0.24
+      tby += (my - tby) * 0.24
+      const tOn = on ? trailOp : 0
+      trailA.style.opacity = tOn.toFixed(3)
+      trailB.style.opacity = (tOn * 0.75).toFixed(3)
+      trailA.style.transform = 'translate(' + (tax - 4) + 'px,' + (tay - 4) + 'px)'
+      trailB.style.transform = 'translate(' + (tbx - 4) + 'px,' + (tby - 4) + 'px)'
       if (spot) {
         spx += (mx - spx) * 0.06
         spy += (my - spy) * 0.06
@@ -541,6 +733,8 @@ export function initPageEffects({ cursorFx = true } = {}) {
       cancelAnimationFrame(raf)
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseover', onOver)
+      trailA.remove()
+      trailB.remove()
     })
   }
 

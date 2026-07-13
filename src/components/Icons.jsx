@@ -56,6 +56,24 @@ export function StopIcon({ size = 11 }) {
   )
 }
 
+export function SpeakerIcon({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4z" />
+      <path d="M16.2 9.2a4.1 4.1 0 0 1 0 5.6M18.8 6.8a7.6 7.6 0 0 1 0 10.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function MuteIcon({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4z" />
+      <path d="M16.5 9.5l5 5M21.5 9.5l-5 5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function LogoMark() {
   return (
     <span className="logo-mark">

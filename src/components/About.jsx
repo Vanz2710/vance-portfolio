@@ -35,9 +35,9 @@ export default function About() {
           </p>
           <div style={{ marginTop: 8 }}>
             <div className="mini-label exploring-label">// currently exploring</div>
-            <div className="chips">
+            <div className="chips" data-chip-zone="">
               {EXPLORING.map((c) => (
-                <span key={c} className="chip">{c}</span>
+                <span key={c} className="chip" data-chip="">{c}</span>
               ))}
             </div>
           </div>
