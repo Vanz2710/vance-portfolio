@@ -35,9 +35,9 @@ export default function Skills() {
       </div>
       <div className="skills-grid">
         <div className="skills-deco">
-          <div data-plx=".14" style={{ position: 'absolute', left: 8, top: 10, width: 92, height: 92, backgroundImage: 'radial-gradient(rgba(171,178,191,.6) 1.2px,transparent 1.2px)', backgroundSize: '16px 16px' }} />
-          <div data-plx=".08" style={{ position: 'absolute', right: 26, top: 44, width: 86, height: 86, border: '1px solid rgba(171,178,191,.5)', animation: 'floaty 7s ease-in-out infinite' }} />
-          <div data-plx=".18" style={{ position: 'absolute', left: 120, top: 150, width: 70, height: 70, backgroundImage: 'radial-gradient(rgba(171,178,191,.45) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px' }} />
+          <div data-plx=".14" style={{ position: 'absolute', left: 8, top: 10, width: 92, height: 92, backgroundImage: 'radial-gradient(rgba(var(--line),.6) 1.2px,transparent 1.2px)', backgroundSize: '16px 16px' }} />
+          <div data-plx=".08" style={{ position: 'absolute', right: 26, top: 44, width: 86, height: 86, border: '1px solid rgba(var(--line),.5)', animation: 'floaty 7s ease-in-out infinite' }} />
+          <div data-plx=".18" style={{ position: 'absolute', left: 120, top: 150, width: 70, height: 70, backgroundImage: 'radial-gradient(rgba(var(--line),.45) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px' }} />
           <div data-plx=".1" style={{ position: 'absolute', left: 34, top: 196, width: 62, height: 62, border: '1px solid var(--ac,#C778DD)' }} />
           <div data-plx=".1" style={{ position: 'absolute', left: 66, top: 228, width: 62, height: 62, border: '1px solid color-mix(in oklab, var(--ac,#C778DD) 55%, transparent)' }} />
         </div>

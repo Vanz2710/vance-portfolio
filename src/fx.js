@@ -16,6 +16,61 @@
  *   data-nl-t             active nav-link highlighting
  * Returns a cleanup function (safe under React StrictMode double-mount).
  */
+
+const SCRAMBLE_CH = '#/<>[]{}=+*_\\'
+
+/* Scramble an element's text back to itself. Reused by the scroll-in
+   heading effect and the theme-glitch transition; keeps the original
+   text on the node so overlapping runs can't garble it permanently. */
+function scrambleEl(el, total = 20, step = 34) {
+  if (el.__scr) clearInterval(el.__scr)
+  const orig = el.__orig ?? (el.__orig = el.textContent)
+  let f = 0
+  const iv = setInterval(() => {
+    f++
+    const k = Math.floor((f / total) * orig.length)
+    let out = orig.slice(0, k)
+    for (let i = k; i < orig.length; i++) out += SCRAMBLE_CH[Math.floor(Math.random() * SCRAMBLE_CH.length)]
+    el.textContent = out
+    if (f >= total) { clearInterval(iv); el.__scr = null; el.textContent = orig }
+  }, step)
+  el.__scr = iv
+  return iv
+}
+
+/* Full-page glitch used when switching between dark/light themes.
+   Layers: two backdrop-filter slice bands (invert + hue-shift) jumping
+   across the screen, a scanline/noise static flicker, a jitter on the
+   page chrome, and a re-scramble of the headings currently in view.
+   `apply` (the actual theme flip) fires mid-glitch, under the full-
+   screen invert flash, so the swap itself reads as part of the effect. */
+let glitchBusy = false
+export function themeGlitch(apply) {
+  if (glitchBusy || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    apply()
+    return
+  }
+  glitchBusy = true
+  const veil = document.createElement('div')
+  veil.className = 'glitch-veil'
+  veil.setAttribute('aria-hidden', 'true')
+  veil.innerHTML = '<i class="gv-a"></i><i class="gv-b"></i><b class="gv-static"></b>'
+  ;(document.querySelector('.site') || document.body).appendChild(veil)
+  document.documentElement.classList.add('is-glitching')
+  const vh = window.innerHeight
+  document.querySelectorAll('[data-scr], [data-gl]').forEach((el) => {
+    const r = el.getBoundingClientRect()
+    if (r.bottom < 0 || r.top > vh) return
+    scrambleEl(el, 14, 28)
+  })
+  setTimeout(apply, 230)
+  setTimeout(() => {
+    document.documentElement.classList.remove('is-glitching')
+    veil.remove()
+    glitchBusy = false
+  }, 640)
+}
+
 export function initPageEffects({ cursorFx = true } = {}) {
   const cleanups = []
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -49,10 +104,10 @@ export function initPageEffects({ cursorFx = true } = {}) {
     const glitch = () => {
       gls.forEach((el, i) => {
         glitchTimers.push(setTimeout(() => {
-          el.style.textShadow = '2px 0 rgba(97,175,239,.85), -2px 0 rgba(224,108,117,.85)'
+          el.style.textShadow = '2px 0 var(--glitch-a), -2px 0 var(--glitch-b)'
           el.style.transform = 'skewX(-4deg)'
           glitchTimers.push(setTimeout(() => {
-            el.style.textShadow = '-2px 0 rgba(97,175,239,.85), 2px 0 rgba(224,108,117,.85)'
+            el.style.textShadow = '-2px 0 var(--glitch-a), 2px 0 var(--glitch-b)'
             el.style.transform = 'skewX(3deg) translateX(-1px)'
           }, 70))
           glitchTimers.push(setTimeout(() => {
@@ -157,7 +212,6 @@ export function initPageEffects({ cursorFx = true } = {}) {
   cleanups.push(() => rvObs.disconnect())
 
   /* ---- heading scramble ---- */
-  const CH = '#/<>[]{}=+*_\\'
   const scrIntervals = []
   const scrObs = new IntersectionObserver((entries) => {
     entries.forEach((en) => {
@@ -166,18 +220,7 @@ export function initPageEffects({ cursorFx = true } = {}) {
       scrObs.unobserve(el)
       if (reduce || el.__done) return
       el.__done = true
-      const orig = el.textContent
-      let f = 0
-      const total = 20
-      const iv = setInterval(() => {
-        f++
-        const k = Math.floor((f / total) * orig.length)
-        let out = orig.slice(0, k)
-        for (let i = k; i < orig.length; i++) out += CH[Math.floor(Math.random() * CH.length)]
-        el.textContent = out
-        if (f >= total) { clearInterval(iv); el.textContent = orig }
-      }, 34)
-      scrIntervals.push(iv)
+      scrIntervals.push(scrambleEl(el))
     })
   }, { threshold: 0.6 })
   document.querySelectorAll('[data-scr]').forEach((el) => scrObs.observe(el))
@@ -257,7 +300,7 @@ export function initPageEffects({ cursorFx = true } = {}) {
       if (nav) {
         nav.style.paddingTop = sc > 60 ? '12px' : '22px'
         nav.style.paddingBottom = sc > 60 ? '12px' : '22px'
-        nav.style.boxShadow = sc > 60 ? '0 8px 24px rgba(0,0,0,.35)' : 'none'
+        nav.style.boxShadow = sc > 60 ? 'var(--nav-shadow)' : 'none'
       }
       if (topBtn) {
         const show = sc > 600
@@ -292,7 +335,7 @@ export function initPageEffects({ cursorFx = true } = {}) {
       const id = en.target.id
       document.querySelectorAll('[data-nl-t]').forEach((sp) => {
         const on = sp.getAttribute('data-nl-t') === id
-        sp.style.color = on ? '#fff' : '#ABB2BF'
+        sp.style.color = on ? 'var(--bright)' : 'var(--fg)'
         sp.style.fontWeight = on ? '600' : '400'
       })
     })

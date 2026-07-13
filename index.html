@@ -14,6 +14,19 @@
       content="Full-stack developer and IT graduate building scalable, user-focused web applications. Laravel · Vue 3 · IoT."
     />
     <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#282C33" />
+    <script>
+      // Apply the saved theme before first paint so a light-mode
+      // preference doesn't flash dark on reload. The no-preference
+      // fallback must match SETTINGS.theme in src/App.jsx.
+      try {
+        var t = localStorage.getItem('vt-theme') === 'light' ? 'light' : 'dark'
+        document.documentElement.setAttribute('data-theme', t)
+        if (t === 'light') {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FAFAFA')
+        }
+      } catch (e) { /* storage unavailable */ }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

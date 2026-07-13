@@ -23,6 +23,23 @@ export function MailIcon({ size = 20 }) {
   )
 }
 
+export function SunIcon({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.4" />
+      <path d="M12 2.4v2.5M12 19.1v2.5M2.4 12h2.5M19.1 12h2.5M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2L17 7M7 17l-1.8 1.8" />
+    </svg>
+  )
+}
+
+export function MoonIcon({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.2 14.4A8.2 8.2 0 1 1 9.6 3.8a6.8 6.8 0 1 0 10.6 10.6z" />
+    </svg>
+  )
+}
+
 export function LogoMark() {
   return (
     <span className="logo-mark">

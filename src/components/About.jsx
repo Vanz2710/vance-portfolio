@@ -46,7 +46,7 @@ export default function About() {
           <div
             data-plx=".16"
             aria-hidden="true"
-            style={{ position: 'absolute', right: -20, top: -30, width: 76, height: 76, backgroundImage: 'radial-gradient(rgba(171,178,191,.55) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px' }}
+            style={{ position: 'absolute', right: -20, top: -30, width: 76, height: 76, backgroundImage: 'radial-gradient(rgba(var(--line),.55) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px' }}
           />
           <div className="stats-grid">
             <div className="stat">

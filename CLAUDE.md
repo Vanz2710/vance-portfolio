@@ -21,13 +21,16 @@ Single-page React app with no router — all sections are in one scrollable page
 
 **Entry point:** `index.html` → `src/main.jsx` → `src/App.jsx`
 
-**`src/App.jsx`** is the shell. It owns all cross-cutting UI state (mobile menu, case-study modal, "view all" projects, command palette + its filtered command list, toast, accent-color override) plus:
-- `SETTINGS` at the top — accent color default, `cursorFx` toggle, `showAiSection` toggle
+**`src/App.jsx`** is the shell. It owns all cross-cutting UI state (mobile menu, case-study modal, "view all" projects, command palette + its filtered command list, toast, accent-color override, dark/light theme) plus:
+- `SETTINGS` at the top — accent name default, theme default, `cursorFx` toggle, `showAiSection` toggle
+- theme state: persisted to `localStorage['vt-theme']`, reflected as `data-theme` on `<html>` (an inline script in `index.html` applies it pre-paint to avoid a flash), and switched through `themeGlitch()` from fx.js; `ACCENTS[name][theme]` picks the accent hex per theme (One Dark accents on dark, One Light on light)
 - body scroll-lock while any overlay is open
 - global keyboard shortcuts: `Ctrl/Cmd+K` and `/` open the command palette, `Escape` closes palette → modal → menu
 
 **`src/fx.js`** — all imperative page effects, initialized once from App via `useEffect` and driven by data-attributes (returns a cleanup function; StrictMode-safe):
 boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider draw-in (`data-line`), card tilt (`data-hov`), magnetic buttons (`data-mag`), scroll reveals (`data-rv`/`data-rvd`), heading scramble (`data-scr`), counters (`data-cnt`), typing loop (`data-typed`), scroll progress/nav shrink/back-to-top (`data-prog`/`data-nav`/`data-top`), background + section parallax (`data-grid`/`data-bgp`/`data-bgr`/`data-plx`), custom cursor + spotlight (`data-cur-dot`/`data-spot`), active nav-link tracking (`data-nl-t`). All effects respect `prefers-reduced-motion`.
+
+fx.js also exports `themeGlitch(apply)` — the dark/light transition: it appends a `.glitch-veil` (two `backdrop-filter` slice bands + scanline/noise static), adds `.is-glitching` to `<html>` (jitters `.main`/`.nav`/`.footer`), re-scrambles the headings currently in view, runs `apply()` (the actual theme flip) at 230ms under the full-screen invert flash, and cleans up at 640ms. Guarded against re-entry; falls back to an instant flip under reduced motion.
 
 **`src/data/projects.js`** — the five case studies (card copy + modal copy, metrics, bullets, tags, GitHub links).
 
@@ -39,8 +42,9 @@ boot overlay timeline (`data-boot`/`data-bl`), hero glitch (`data-gl`), divider 
 Plain CSS (no Tailwind). Everything lives in `src/index.css` using semantic class names (`.pcard`, `.exp-item`, `.pal-item`, …).
 
 - **Font:** Fira Code via Google Fonts (`index.html`).
-- **Palette:** One Dark — bg `#282C33`, panels `#23272E`/`#21252B`, fg `#ABB2BF`, dim `#5C6370`, red `#E06C75`, yellow `#E5C07B`, green `#98C379`.
-- **Accent theming:** every accent usage goes through `var(--ac, #C778DD)`, set inline on `.site` from React state. The command palette's `accent purple|blue|green|yellow` commands swap it at runtime. Hover fills/shadows use `color-mix(in oklab, var(--ac) N%, transparent)`.
+- **Palette:** One Dark by default — bg `#282C33`, panels `#23272E`/`#21252B`, fg `#ABB2BF`, dim `#5C6370`, red `#E06C75`, yellow `#E5C07B`, green `#98C379`. All colors are `:root` custom properties (`--bg`, `--panel`, `--fg`, `--dim`, `--bright`, `--red`, …); `:root[data-theme="light"]` swaps the whole set to One Light (`#FAFAFA` bg, `#24292E` bright, `#A626A4` purple, …). `--line` is an `R, G, B` triplet so borders keep per-use alphas via `rgba(var(--line), .35)`. Never hardcode a hex in a rule — add or reuse a token so both themes stay covered.
+- **Theme switching:** `data-theme` on `<html>` (set pre-paint by an inline `index.html` script from `localStorage['vt-theme']`, then owned by App state). Toggled from the navbar sun/moon button or the palette's `theme light|dark` commands, always through `themeGlitch()`.
+- **Accent theming:** every accent usage goes through `var(--ac, #C778DD)`, set inline on `.site` from React state (`--ac` lives on `.site`, not `:root` — nodes outside `.site` only see the fallback). The command palette's `accent purple|blue|green|yellow` commands swap it at runtime; the hex differs per theme via `ACCENTS[name][theme]` in App.jsx. Hover fills/shadows use `color-mix(in oklab, var(--ac) N%, transparent)`.
 - **Breakpoints:** `max-width: 920px` (single-column hero/skills/about/contact/ai, hide social rail + skills deco) and `max-width: 820px` (burger menu replaces nav links, single-column experience, `.pad-x` gutters drop to 22px).
 - Reveal/tilt/parallax styling is applied by `src/fx.js` via inline styles on the data-attributed elements; keyframes live in `index.css`.
 

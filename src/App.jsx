@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PROJECTS } from './data/projects'
-import { initPageEffects } from './fx'
+import { initPageEffects, themeGlitch } from './fx'
 import Boot from './components/Boot'
 import Background from './components/Background'
 import SocialRail from './components/SocialRail'
@@ -22,16 +22,29 @@ import ProjectModal from './components/ProjectModal'
 
 // Site-level knobs (the design's configurable props).
 const SETTINGS = {
-  accent: '#C778DD', // options: #C778DD · #61AFEF · #98C379 · #E5C07B
+  accent: 'purple', // options: purple · blue · green · yellow
+  theme: 'dark', // default when no saved preference · options: dark · light — keep index.html's pre-paint fallback in sync
   cursorFx: true,
   showAiSection: true,
 }
 
+// Accent hex per theme: One Dark values on dark, One Light on light
+// (the dark accents don't have enough contrast on a white background).
 const ACCENTS = {
-  purple: '#C778DD',
-  blue: '#61AFEF',
-  green: '#98C379',
-  yellow: '#E5C07B',
+  purple: { dark: '#C778DD', light: '#A626A4' },
+  blue: { dark: '#61AFEF', light: '#4078F2' },
+  green: { dark: '#98C379', light: '#50A14F' },
+  yellow: { dark: '#E5C07B', light: '#C18401' },
+}
+
+const THEME_BG = { dark: '#282C33', light: '#FAFAFA' }
+
+function initialTheme() {
+  try {
+    const saved = localStorage.getItem('vt-theme')
+    if (saved === 'dark' || saved === 'light') return saved
+  } catch { /* storage unavailable */ }
+  return SETTINGS.theme
 }
 
 // Command palette entries: [verb, arg] pairs dispatched in runCmd.
@@ -51,6 +64,8 @@ const COMMANDS = [
   { cmd: 'accent blue', desc: 'theme accent → blue', action: ['accent', 'blue'] },
   { cmd: 'accent green', desc: 'theme accent → green', action: ['accent', 'green'] },
   { cmd: 'accent yellow', desc: 'theme accent → yellow', action: ['accent', 'yellow'] },
+  { cmd: 'theme light', desc: 'glitch into light mode', action: ['theme', 'light'] },
+  { cmd: 'theme dark', desc: 'glitch into dark mode', action: ['theme', 'dark'] },
   { cmd: 'whoami', desc: 'print identity', action: ['toast', 'vance tindoc — full-stack developer · kuala lumpur'] },
   { cmd: 'sudo hire-me', desc: 'run with elevated privileges', action: ['hire'] },
 ]
@@ -69,10 +84,22 @@ export default function App() {
   const [palQuery, setPalQuery] = useState('')
   const [palSel, setPalSel] = useState(0)
   const [toast, setToast] = useState('')
-  const [accentOverride, setAccentOverride] = useState(null)
+  const [accentName, setAccentName] = useState(SETTINGS.accent)
+  const [theme, setTheme] = useState(initialTheme)
   const toastTimer = useRef(null)
 
-  const accent = accentOverride ?? SETTINGS.accent
+  const accent = (ACCENTS[accentName] ?? ACCENTS.purple)[theme]
+
+  /* persistence lives here (not in the effect) so a first visit that never
+     toggles doesn't freeze the site default into localStorage */
+  const switchTheme = (next) => {
+    const target = next ?? (theme === 'dark' ? 'light' : 'dark')
+    if (target === theme) return
+    themeGlitch(() => {
+      setTheme(target)
+      try { localStorage.setItem('vt-theme', target) } catch { /* storage unavailable */ }
+    })
+  }
 
   const openPalette = () => {
     setPalOpen(true)
@@ -94,8 +121,11 @@ export default function App() {
     else if (verb === 'open') window.open(arg, '_blank')
     else if (verb === 'mail') window.location.assign(arg)
     else if (verb === 'accent') {
-      setAccentOverride(ACCENTS[arg])
+      setAccentName(arg)
       showToast('accent set to ' + arg)
+    } else if (verb === 'theme') {
+      if (arg === theme) showToast('already in ' + arg + ' mode')
+      else switchTheme(arg)
     } else if (verb === 'toast') showToast(arg)
     else if (verb === 'cv') {
       const a = document.createElement('a')
@@ -117,6 +147,12 @@ export default function App() {
 
   /* one-time imperative page effects (boot, reveals, cursor, parallax, ...) */
   useEffect(() => initPageEffects({ cursorFx: SETTINGS.cursorFx }), [])
+
+  /* reflect theme on <html> (index.html pre-paint script sets the initial value) */
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BG[theme])
+  }, [theme])
 
   /* body scroll lock while any overlay is open */
   useEffect(() => {
@@ -169,8 +205,10 @@ export default function App() {
 
       <Navbar
         menuOpen={menuOpen}
+        theme={theme}
         onToggleMenu={() => setMenuOpen((v) => !v)}
         onOpenPalette={openPalette}
+        onToggleTheme={() => switchTheme()}
       />
       {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
 

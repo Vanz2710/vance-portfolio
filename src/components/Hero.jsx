@@ -28,17 +28,17 @@ export default function Hero() {
         />
         <div
           data-plx=".2"
-          style={{ position: 'absolute', right: -24, top: '54%', width: 92, height: 92, backgroundImage: 'radial-gradient(rgba(171,178,191,.75) 1.2px,transparent 1.2px)', backgroundSize: '16px 16px', zIndex: 2 }}
+          style={{ position: 'absolute', right: -24, top: '54%', width: 92, height: 92, backgroundImage: 'radial-gradient(rgba(var(--line),.75) 1.2px,transparent 1.2px)', backgroundSize: '16px 16px', zIndex: 2 }}
         />
         <div
           data-plx=".07"
-          style={{ position: 'absolute', right: 34, top: -26, width: 60, height: 60, backgroundImage: 'radial-gradient(rgba(171,178,191,.45) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px', zIndex: 0 }}
+          style={{ position: 'absolute', right: 34, top: -26, width: 60, height: 60, backgroundImage: 'radial-gradient(rgba(var(--line),.45) 1.2px,transparent 1.2px)', backgroundSize: '15px 15px', zIndex: 0 }}
         />
         <img src="/vance.jpg" alt="Portrait of Vance Tindoc" className="hero-photo" />
         <div className="hero-chip">
           <span className="chip-sq" />
           <span>
-            Currently interning at <span style={{ color: '#fff', fontWeight: 600 }}>Bluedale Group</span>
+            Currently interning at <span className="white" style={{ fontWeight: 600 }}>Bluedale Group</span>
           </span>
         </div>
       </div>
