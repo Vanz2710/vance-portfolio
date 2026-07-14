@@ -20,7 +20,7 @@
  * Returns a cleanup function (safe under React StrictMode double-mount).
  */
 
-import { crackle, humStart, stopHum, tick } from './sound'
+import { click, crackle, humStart, stopHum, tick } from './sound'
 
 const SCRAMBLE_CH = '#/<>[]{}=+*_\\'
 
@@ -238,6 +238,15 @@ export function runTour({ onDone } = {}) {
 export function initPageEffects({ cursorFx = true } = {}) {
   const cleanups = []
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  /* ---- button/link press SFX (delegated; sound.js no-ops while muted).
+     pointerdown, not click: fires on the press like a real key, and it's a
+     trusted gesture so it doubles as an audio-context unlock ---- */
+  const onUiPress = (e) => {
+    if (e.target.closest?.('button, a[href]')) click()
+  }
+  document.addEventListener('pointerdown', onUiPress, true)
+  cleanups.push(() => document.removeEventListener('pointerdown', onUiPress, true))
 
   /* ---- boot sequence ---- */
   const boot = document.querySelector('[data-boot]')
@@ -640,6 +649,7 @@ export function initPageEffects({ cursorFx = true } = {}) {
     skills: ['<>', 'npm', ';;', '{}', '#', '( )', '::'],
     'about-me': ['?', '&&', '@', '!', '~', '[ ]', '::'],
     experience: ['$', '>_', '&&', '=>', '#', '[ ]', '::'],
+    education: ['.edu', 'uni', '++', '=>', '#', '[ ]', '::'],
     resume: ['.pdf', '{ }', '$', '=>', '#', '[ ]', '::'],
     'ai-workflow': ['λ', 'ai', '=>', ';', '#', '[ ]', '::'],
     terminal: ['$', '>_', '~', ';', '#', '[ ]', '::'],

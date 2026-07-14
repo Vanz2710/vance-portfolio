@@ -19,13 +19,6 @@ const ITEMS = [
     org: 'The Peranakan',
     desc: 'Delivered fast, client-focused service in a high-volume environment — accurate daily transactions, POS operations and team leadership during peak hours.',
     delay: '160',
-  },
-  {
-    date: '[2023 – present]',
-    role: 'BSc Information Technology',
-    org: 'HELP University · CGPA 3.32',
-    desc: 'Software development, system design, data analysis and UI/UX principles — with academic and personal projects across Java, Python, JavaScript, Angular, Django and Laravel.',
-    delay: '240',
     last: true,
   },
 ]

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PROJECTS } from './data/projects'
 import { initPageEffects, meltdown, runTour, themeGlitch } from './fx'
-import { setSound, tick } from './sound'
+import { chime, setSound } from './sound'
 import Boot from './components/Boot'
 import Background from './components/Background'
 import SocialRail from './components/SocialRail'
@@ -14,6 +14,7 @@ import Projects from './components/Projects'
 import Skills from './components/Skills'
 import About from './components/About'
 import Experience from './components/Experience'
+import Education from './components/Education'
 import Resume from './components/Resume'
 import AIWorkflow from './components/AIWorkflow'
 import Terminal from './components/Terminal'
@@ -69,6 +70,7 @@ const COMMANDS = [
   { cmd: 'cd skills', desc: 'jump to skills', action: ['jump', 'skills'] },
   { cmd: 'cd about-me', desc: 'jump to about', action: ['jump', 'about-me'] },
   { cmd: 'cd experience', desc: 'jump to experience', action: ['jump', 'experience'] },
+  { cmd: 'cd education', desc: 'jump to education', action: ['jump', 'education'] },
   { cmd: 'cd resume', desc: 'jump to resume', action: ['jump', 'resume'] },
   { cmd: 'cd terminal', desc: 'jump to the terminal', action: ['jump', 'terminal'] },
   { cmd: 'cd contacts', desc: 'jump to contacts', action: ['jump', 'contacts'] },
@@ -160,7 +162,7 @@ export default function App() {
     const next = typeof to === 'boolean' ? to : !soundOn
     setSoundOn(next)
     setSound(next)
-    if (next) tick()
+    if (next) chime()
     try { localStorage.setItem('vt-sound', next ? '1' : '0') } catch { /* storage unavailable */ }
     showToast(next ? 'sound on' : 'sound off')
   }
@@ -308,6 +310,7 @@ export default function App() {
         <Skills />
         <About />
         <Experience />
+        <Education />
         <Resume />
         {SETTINGS.showAiSection && <AIWorkflow />}
         <Terminal onAction={execAction} />

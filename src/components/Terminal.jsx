@@ -12,7 +12,7 @@ const HELP = [
   ['help', 'this list'],
   ['ls [projects|skills]', 'list contents'],
   ['cat about.txt', 'who is vance?'],
-  ['cd <section>', 'jump — projects · skills · about-me · experience · resume · contacts'],
+  ['cd <section>', 'jump — projects · skills · about-me · experience · education · resume · contacts'],
   ['theme dark|light', 'glitch the theme'],
   ['accent <color>', 'purple · blue · green · yellow'],
   ['tour', 'auto-tour every section'],
@@ -22,7 +22,7 @@ const HELP = [
   ['whoami · neofetch · history · clear', 'the usual suspects'],
 ]
 
-const SECTIONS = ['home', 'projects', 'skills', 'about-me', 'experience', 'resume', 'ai-workflow', 'terminal', 'contacts']
+const SECTIONS = ['home', 'projects', 'skills', 'about-me', 'experience', 'education', 'resume', 'ai-workflow', 'terminal', 'contacts']
 const ACCENT_NAMES = ['purple', 'blue', 'green', 'yellow']
 
 const NEOFETCH = [
